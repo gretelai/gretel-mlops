@@ -1,1 +1,2 @@
 gretel-client[aws]
+scikit-learn==1.2.1

@@ -164,7 +164,7 @@ def get_pipeline(
 
     # processing step for feature engineering
     sklearn_processor = SKLearnProcessor(
-        framework_version="0.23-1",
+        framework_version="1.2-1",
         instance_type=processing_instance_type,
         instance_count=processing_instance_count,
         base_job_name=f"{base_job_prefix}/sklearn-abalone-preprocess",
@@ -174,8 +174,10 @@ def get_pipeline(
     step_args = sklearn_processor.run(
         outputs=[
             ProcessingOutput(output_name="train", source="/opt/ml/processing/train"),
+            ProcessingOutput(output_name="train_source", source="/opt/ml/processing/train_source"),
             ProcessingOutput(output_name="validation", source="/opt/ml/processing/validation"),
             ProcessingOutput(output_name="test", source="/opt/ml/processing/test"),
+            ProcessingOutput(output_name="preprocess", source="/opt/ml/processing/preprocess"),
         ],
         code=os.path.join(BASE_DIR, "preprocess.py"),
         arguments=["--input-data", input_data],
@@ -209,13 +211,20 @@ def get_pipeline(
         inputs=[
             ProcessingInput(
                 source=step_process.properties.ProcessingOutputConfig.Outputs[
-                    "train"
+                    "train_source"
                 ].S3Output.S3Uri,
-                destination="/opt/ml/processing/train",
+                destination="/opt/ml/processing/train_source",
+            ),
+            ProcessingInput(
+                source=step_process.properties.ProcessingOutputConfig.Outputs[
+                    "preprocess"
+                ].S3Output.S3Uri,
+                destination="/opt/ml/processing/preprocess",
             ),
         ],
         outputs=[
             ProcessingOutput(output_name="gretel", source="/opt/ml/processing/gretel"),
+            ProcessingOutput(output_name="train_synth", source="/opt/ml/processing/train_synth"),
         ],
         code="run_gretel.py",
         source_dir=os.path.join(BASE_DIR, "gretel"),
@@ -259,7 +268,7 @@ def get_pipeline(
         inputs={
             "train": TrainingInput(
                 s3_data=step_gretel.properties.ProcessingOutputConfig.Outputs[
-                    "gretel"
+                    "train_synth"
                 ].S3Output.S3Uri,
                 content_type="text/csv",
             ),
