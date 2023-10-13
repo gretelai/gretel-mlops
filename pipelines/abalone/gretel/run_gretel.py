@@ -58,8 +58,6 @@ if __name__ == "__main__":
     # Configure a Gretel session
     GRETEL_API_KEY = get_secret()
     gretel = Gretel(api_key=GRETEL_API_KEY, validate=True)
-    trained = gretel.submit_train("tabular-actgan", data_source=data_source)
-    generated = gretel.submit_generate(trained.model_id, num_records=RECORDS_TO_GENERATE)
     
     # Train a Generative Model
     trained = gretel.submit_train("tabular-actgan", data_source=data_source)
@@ -77,8 +75,8 @@ if __name__ == "__main__":
     
     # Generate Synthetic data
     generate_factor = args.generate_factor
-    num_records = int(len(data_source) * generate_factor)
-    generated = gretel.submit_generate(trained.model_id, num_records=num_records)
+    RECORDS_TO_GENERATE = int(len(data_source) * generate_factor)
+    generated = gretel.submit_generate(trained.model_id, num_records=RECORDS_TO_GENERATE)
     logger.info("Gretel generation step completed")
     
     # Write out synthetic data
