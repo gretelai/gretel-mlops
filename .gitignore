@@ -1,5 +1,6 @@
 # Ignore compiled Python files
 *.pyc
+.ipynb_checkpoints/
 
 # Ignore log files
 *.log
