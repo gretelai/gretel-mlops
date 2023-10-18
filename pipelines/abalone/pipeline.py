@@ -1,10 +1,10 @@
 """Example workflow pipeline script for abalone pipeline.
 
-                                               . -ModelStep
-                                              .
-    Process-> Train -> Evaluate -> Condition .
-                                              .
-                                               . -(stop)
+                                                                  . -ModelStep
+                                                                 .
+    Process -> Synthetic Data -> Train -> Evaluate -> Condition .
+                                                                 .
+                                                                  . -(stop)
 
 Implements a get_pipeline(**kwargs) method.
 """
@@ -14,6 +14,7 @@ import boto3
 import sagemaker
 import sagemaker.session
 
+from pipelines.abalone.datasets import datasets
 from sagemaker.estimator import Estimator
 from sagemaker.inputs import TrainingInput
 from sagemaker.model_metrics import (
@@ -28,7 +29,16 @@ from sagemaker.processing import (
 )
 from sagemaker.pytorch import PyTorch
 from sagemaker.sklearn.processing import SKLearnProcessor
-from sagemaker.workflow.conditions import ConditionLessThanOrEqualTo
+from sagemaker.tuner import (
+    IntegerParameter,
+    CategoricalParameter,
+    ContinuousParameter,
+    HyperparameterTuner,
+)
+from sagemaker.workflow.conditions import (
+    ConditionLessThanOrEqualTo,
+    ConditionGreaterThan,
+)
 from sagemaker.workflow.condition_step import (
     ConditionStep,
 )
@@ -44,6 +54,7 @@ from sagemaker.workflow.properties import PropertyFile
 from sagemaker.workflow.steps import (
     ProcessingStep,
     TrainingStep,
+    TuningStep,
 )
 from sagemaker.workflow.model_step import ModelStep
 from sagemaker.model import Model
@@ -53,18 +64,18 @@ from sagemaker.workflow.pipeline_context import PipelineSession
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 
 def get_sagemaker_client(region):
-     """Gets the sagemaker client.
+    """Gets the sagemaker client.
 
-        Args:
-            region: the aws region to start the session
-            default_bucket: the bucket to use for storing the artifacts
+    Args:
+        region: the aws region to start the session
+        default_bucket: the bucket to use for storing the artifacts
 
-        Returns:
-            `sagemaker.session.Session instance
-        """
-     boto_session = boto3.Session(region_name=region)
-     sagemaker_client = boto_session.client("sagemaker")
-     return sagemaker_client
+    Returns:
+        `sagemaker.session.Session instance
+    """
+    boto_session = boto3.Session(region_name=region)
+    sagemaker_client = boto_session.client("sagemaker")
+    return sagemaker_client
 
 
 def get_session(region, default_bucket):
@@ -135,6 +146,7 @@ def get_pipeline(
     processing_instance_type="ml.m5.xlarge",
     training_instance_type="ml.m5.xlarge",
     gretel_parameters=None,
+    dataset="abalone"
 ):
     """Gets a SageMaker ML Pipeline instance working with on a tabular dataset.
 
@@ -157,21 +169,32 @@ def get_pipeline(
     model_approval_status = ParameterString(
         name="ModelApprovalStatus", default_value="PendingManualApproval"
     )
-    input_data = ParameterString(
-        name="InputDataUrl",
-        default_value=f"s3://sagemaker-servicecatalog-seedcode-{region}/dataset/abalone-dataset.csv",
+    dataset_name = ParameterString(
+        name="InputDatasetName",
+        default_value=dataset,
     )
 
+    # dataset parameters
+    objective = datasets[dataset]['objective']
+    objective_type = datasets[dataset]['objective_type']
+    ml_eval_metric = datasets[dataset]['ml_eval_metric']
+    ml_metric_threshold = datasets[dataset]['ml_metric_threshold']
+    ml_task = datasets[dataset]['ml_task']
+    label_column_name = datasets[dataset]['label_column_name']
+    
     # processing step for feature engineering
-    sklearn_processor = SKLearnProcessor(
-        framework_version="1.2-1",
+    script_preprocess = FrameworkProcessor(
+        command=["python3"],
         instance_type=processing_instance_type,
-        instance_count=processing_instance_count,
-        base_job_name=f"{base_job_prefix}/sklearn-preprocess",
+        instance_count=1,
+        base_job_name=f"{base_job_prefix}/script-preprocess",
         sagemaker_session=pipeline_session,
         role=role,
+        estimator_cls=PyTorch,
+        framework_version="2.0.1",
+        py_version="py310",
     )
-    step_args = sklearn_processor.run(
+    step_args = script_preprocess.run(
         outputs=[
             ProcessingOutput(output_name="train", source="/opt/ml/processing/train"),
             ProcessingOutput(output_name="train_source", source="/opt/ml/processing/train_source"),
@@ -179,8 +202,9 @@ def get_pipeline(
             ProcessingOutput(output_name="test", source="/opt/ml/processing/test"),
             ProcessingOutput(output_name="preprocess", source="/opt/ml/processing/preprocess"),
         ],
-        code=os.path.join(BASE_DIR, "preprocess.py"),
-        arguments=["--input-data", input_data],
+        code="preprocess.py",
+        source_dir=BASE_DIR,
+        arguments=["--dataset-name", dataset_name],
     )
     step_process = ProcessingStep(
         name="PreprocessData",
@@ -188,14 +212,12 @@ def get_pipeline(
     )
 
 
-    ##############
-    # gretel
+    # gretel step for synthetic data generation
     if gretel_parameters is None:
         gretel_parameters = {}
-        gretel_parameters['generate_factor'] = "1.0"
+        gretel_parameters['generate_factor'] = "10.0"
         
     script_gretel = FrameworkProcessor(
-        # image_uri=image_uri,
         command=["python3"],
         instance_type=processing_instance_type,
         instance_count=1,
@@ -226,16 +248,18 @@ def get_pipeline(
             ProcessingOutput(output_name="gretel", source="/opt/ml/processing/gretel"),
             ProcessingOutput(output_name="train_synth", source="/opt/ml/processing/train_synth"),
         ],
-        code="run_gretel.py",
-        source_dir=os.path.join(BASE_DIR, "gretel"),
-        arguments=["--generate-factor", gretel_parameters['generate_factor']],
+        code="run_gretel_hyptuning.py",
+        source_dir=BASE_DIR,
+        arguments=[
+            "--generate-factor", gretel_parameters['generate_factor'],
+            "--label-column-name", label_column_name,
+        ],
     )
     step_gretel = ProcessingStep(
         name="GretelSynthetics",
         step_args=step_args,
     )
-    ##############
-    
+
     # training step for generating model artifacts
     model_path = f"s3://{sagemaker_session.default_bucket()}/{base_job_prefix}/ModelTrain"
     image_uri = sagemaker.image_uris.retrieve(
@@ -245,26 +269,39 @@ def get_pipeline(
         py_version="py3",
         instance_type=training_instance_type,
     )
+    fixed_hyperparameters = {
+        "eval_metric": ml_eval_metric,
+        "objective": objective,
+        "num_round": "100",
+        "rate_drop": "0.3",
+        "tweedie_variance_power": "1.4"
+    }
     xgb_train = Estimator(
         image_uri=image_uri,
         instance_type=training_instance_type,
         instance_count=1,
+        hyperparameters=fixed_hyperparameters,
         output_path=model_path,
         base_job_name=f"{base_job_prefix}/model-train",
         sagemaker_session=pipeline_session,
         role=role,
     )
-    xgb_train.set_hyperparameters(
-        objective="reg:linear",
-        num_round=50,
-        max_depth=5,
-        eta=0.2,
-        gamma=4,
-        min_child_weight=6,
-        subsample=0.7,
-        silent=0,
+    hyperparameter_ranges = {
+        "eta": ContinuousParameter(0, 1),
+        "min_child_weight": ContinuousParameter(1, 10),
+        "alpha": ContinuousParameter(0, 2),
+        "max_depth": IntegerParameter(1, 10),
+        }
+    objective_metric_name = f"validation:{ml_eval_metric}"
+    xgb_tuner = HyperparameterTuner(
+        xgb_train,
+        objective_metric_name,
+        hyperparameter_ranges,
+        max_jobs=16,
+        max_parallel_jobs=4,
+        objective_type=objective_type
     )
-    step_args = xgb_train.fit(
+    step_args = xgb_tuner.fit(
         inputs={
             "train": TrainingInput(
                 s3_data=step_gretel.properties.ProcessingOutputConfig.Outputs[
@@ -280,7 +317,7 @@ def get_pipeline(
             ),
         },
     )
-    step_train = TrainingStep(
+    step_train = TuningStep(
         name="TrainModel",
         step_args=step_args,
     )
@@ -298,7 +335,8 @@ def get_pipeline(
     step_args = script_eval.run(
         inputs=[
             ProcessingInput(
-                source=step_train.properties.ModelArtifacts.S3ModelArtifacts,
+                # source=step_train.properties.ModelArtifacts.S3ModelArtifacts,
+                source=step_train.get_top_model_s3_uri(top_k=0,s3_bucket=sagemaker_session.default_bucket(),prefix=f"{base_job_prefix}/ModelTrain"),
                 destination="/opt/ml/processing/model",
             ),
             ProcessingInput(
@@ -312,6 +350,7 @@ def get_pipeline(
             ProcessingOutput(output_name="evaluation", source="/opt/ml/processing/evaluation"),
         ],
         code=os.path.join(BASE_DIR, "evaluate.py"),
+        arguments=["--ml-task", ml_task],
     )
     evaluation_report = PropertyFile(
         name="EvaluationReport",
@@ -335,7 +374,7 @@ def get_pipeline(
     )
     model = Model(
         image_uri=image_uri,
-        model_data=step_train.properties.ModelArtifacts.S3ModelArtifacts,
+        model_data=step_train.get_top_model_s3_uri(top_k=0,s3_bucket=sagemaker_session.default_bucket(),prefix=f"{base_job_prefix}/ModelTrain"),
         sagemaker_session=pipeline_session,
         role=role,
     )
@@ -354,17 +393,28 @@ def get_pipeline(
     )
 
     # condition step for evaluating model quality and branching execution
-    cond_lte = ConditionLessThanOrEqualTo(
-        left=JsonGet(
-            step_name=step_eval.name,
-            property_file=evaluation_report,
-            json_path="regression_metrics.mse.value"
-        ),
-        right=6.0,
-    )
+    if ml_task is "regression":
+        cond = ConditionLessThanOrEqualTo(
+            left=JsonGet(
+                step_name=step_eval.name,
+                property_file=evaluation_report,
+                json_path=f"regression_metrics.{ml_eval_metric}.value"
+            ),
+            right=ml_metric_threshold,
+        )
+    else:
+        cond = ConditionGreaterThan(
+            left=JsonGet(
+                step_name=step_eval.name,
+                property_file=evaluation_report,
+                json_path=f"classification_metrics.{ml_eval_metric}.value",
+            ),
+            right=ml_metric_threshold,
+        )
+    
     step_cond = ConditionStep(
-        name="CheckMSEEvaluation",
-        conditions=[cond_lte],
+        name="CheckEvaluation",
+        conditions=[cond],
         if_steps=[step_register],
         else_steps=[],
     )
@@ -377,7 +427,7 @@ def get_pipeline(
             processing_instance_count,
             training_instance_type,
             model_approval_status,
-            input_data,
+            dataset_name,
         ],
         steps=[step_process, step_gretel, step_train, step_eval, step_cond],
         sagemaker_session=pipeline_session,
