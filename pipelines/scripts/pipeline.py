@@ -14,7 +14,7 @@ import boto3
 import sagemaker
 import sagemaker.session
 
-from pipelines.abalone.datasets import datasets
+# from pipelines.scripts.datasets import datasets
 from sagemaker.estimator import Estimator
 from sagemaker.inputs import TrainingInput
 from sagemaker.model_metrics import (
@@ -145,8 +145,9 @@ def get_pipeline(
     base_job_prefix="Gretel",
     processing_instance_type="ml.m5.xlarge",
     training_instance_type="ml.m5.xlarge",
-    gretel_parameters=None,
-    dataset="abalone"
+    use_gretel=True,
+    config=None
+    # dataset="abalone"
 ):
     """Gets a SageMaker ML Pipeline instance working with on a tabular dataset.
 
@@ -169,18 +170,35 @@ def get_pipeline(
     model_approval_status = ParameterString(
         name="ModelApprovalStatus", default_value="PendingManualApproval"
     )
+    dataset = config['dataset']['name']
     dataset_name = ParameterString(
         name="InputDatasetName",
         default_value=dataset,
     )
 
-    # dataset parameters
-    objective = datasets[dataset]['objective']
-    objective_type = datasets[dataset]['objective_type']
-    ml_eval_metric = datasets[dataset]['ml_eval_metric']
-    ml_metric_threshold = datasets[dataset]['ml_metric_threshold']
-    ml_task = datasets[dataset]['ml_task']
-    label_column_name = datasets[dataset]['label_column_name']
+    # # dataset parameters
+    # objective = datasets[dataset]['objective']
+    # objective_type = datasets[dataset]['objective_type']
+    # ml_eval_metric = datasets[dataset]['ml_eval_metric']
+    # ml_metric_threshold = datasets[dataset]['ml_metric_threshold']
+    # label_column_name = datasets[dataset]['label_column_name']
+    # ml_task = datasets[dataset]['ml_task']
+    # gretel_strategy = datasets[dataset]['gretel_strategy']
+    # gretel_generate_factor = datasets[dataset]['gretel_generate_factor']
+    # gretel_target_balance = datasets[dataset]['gretel_target_balance']
+    dataset_path = config['dataset']['path']
+    target_column = config['dataset']['target_column']
+    drop_columns = config['dataset']['drop_columns']
+    ml_task = config['ML']['ml_task']
+    ml_eval_metric = config['ML']['ml_eval_metric']
+    strategy = config['gretel']['strategy']
+    generate_factor = config['gretel']['generate_factor']
+    target_balance = config['gretel']['target_balance']
+    ml_eval_metric = config['ML']['ml_eval_metric']
+    objective = config['ML']['objective']
+    objective_type = config['ML']['objective_type']
+    ml_metric_threshold = config['ML']['ml_metric_threshold']
+                                     
     
     # processing step for feature engineering
     script_preprocess = FrameworkProcessor(
@@ -204,7 +222,12 @@ def get_pipeline(
         ],
         code="preprocess.py",
         source_dir=BASE_DIR,
-        arguments=["--dataset-name", dataset_name],
+        arguments=[
+            "--dataset-path", dataset_path,
+            "--target-column", target_column,
+            "--drop-columns", drop_columns,
+            "--ml-task", ml_task,
+        ],
     )
     step_process = ProcessingStep(
         name="PreprocessData",
@@ -212,11 +235,7 @@ def get_pipeline(
     )
 
 
-    # gretel step for synthetic data generation
-    if gretel_parameters is None:
-        gretel_parameters = {}
-        gretel_parameters['generate_factor'] = "10.0"
-        
+    # gretel step for synthetic data generation       
     script_gretel = FrameworkProcessor(
         command=["python3"],
         instance_type=processing_instance_type,
@@ -239,6 +258,12 @@ def get_pipeline(
             ),
             ProcessingInput(
                 source=step_process.properties.ProcessingOutputConfig.Outputs[
+                    "validation"
+                ].S3Output.S3Uri,
+                destination="/opt/ml/processing/validation",
+            ),
+            ProcessingInput(
+                source=step_process.properties.ProcessingOutputConfig.Outputs[
                     "preprocess"
                 ].S3Output.S3Uri,
                 destination="/opt/ml/processing/preprocess",
@@ -251,8 +276,11 @@ def get_pipeline(
         code="run_gretel_hyptuning.py",
         source_dir=BASE_DIR,
         arguments=[
-            "--generate-factor", gretel_parameters['generate_factor'],
-            "--label-column-name", label_column_name,
+            "--target-column", target_column,
+            "--ml-eval-metric", ml_eval_metric,
+            "--strategy", strategy,
+            "--generate-factor", str(generate_factor),
+            "--target-balance", str(target_balance),
         ],
     )
     step_gretel = ProcessingStep(
@@ -265,14 +293,14 @@ def get_pipeline(
     image_uri = sagemaker.image_uris.retrieve(
         framework="xgboost",
         region=region,
-        version="1.0-1",
+        version="1.7-1",
         py_version="py3",
         instance_type=training_instance_type,
     )
     fixed_hyperparameters = {
         "eval_metric": ml_eval_metric,
         "objective": objective,
-        "num_round": "100",
+        # "num_round": "100",
         "rate_drop": "0.3",
         "tweedie_variance_power": "1.4"
     }
@@ -291,6 +319,7 @@ def get_pipeline(
         "min_child_weight": ContinuousParameter(1, 10),
         "alpha": ContinuousParameter(0, 2),
         "max_depth": IntegerParameter(1, 10),
+        "num_round": IntegerParameter(100, 500),
         }
     objective_metric_name = f"validation:{ml_eval_metric}"
     xgb_tuner = HyperparameterTuner(
@@ -301,12 +330,15 @@ def get_pipeline(
         max_parallel_jobs=4,
         objective_type=objective_type
     )
+    if use_gretel:
+        train_data = step_gretel.properties.ProcessingOutputConfig.Outputs["train_synth"].S3Output.S3Uri
+    else:
+        train_data = step_process.properties.ProcessingOutputConfig.Outputs["train"].S3Output.S3Uri
+        
     step_args = xgb_tuner.fit(
         inputs={
             "train": TrainingInput(
-                s3_data=step_gretel.properties.ProcessingOutputConfig.Outputs[
-                    "train_synth"
-                ].S3Output.S3Uri,
+                s3_data=train_data,
                 content_type="text/csv",
             ),
             "validation": TrainingInput(
@@ -321,7 +353,7 @@ def get_pipeline(
         name="TrainModel",
         step_args=step_args,
     )
-
+    
     # processing step for evaluation
     script_eval = ScriptProcessor(
         image_uri=image_uri,
@@ -388,7 +420,7 @@ def get_pipeline(
         model_metrics=model_metrics,
     )
     step_register = ModelStep(
-        name="RegisterModel",
+        name="Model",
         step_args=step_args,
     )
 
@@ -409,7 +441,7 @@ def get_pipeline(
                 property_file=evaluation_report,
                 json_path=f"classification_metrics.{ml_eval_metric}.value",
             ),
-            right=ml_metric_threshold,
+            right=ml_metric_threshold
         )
     
     step_cond = ConditionStep(
@@ -418,7 +450,12 @@ def get_pipeline(
         if_steps=[step_register],
         else_steps=[],
     )
-
+    
+    if use_gretel:
+        steps=[step_process, step_gretel, step_train, step_eval, step_cond]
+    else:
+        steps=[step_process, step_train, step_eval, step_cond]
+    
     # pipeline instance
     pipeline = Pipeline(
         name=pipeline_name,
@@ -429,7 +466,8 @@ def get_pipeline(
             model_approval_status,
             dataset_name,
         ],
-        steps=[step_process, step_gretel, step_train, step_eval, step_cond],
+        # steps=[step_process, step_gretel, step_train, step_bl_train, step_eval, step_bl_eval, step_cond],
+        steps=steps,
         sagemaker_session=pipeline_session,
     )
     return pipeline

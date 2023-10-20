@@ -60,7 +60,7 @@ def generate_classification_report(y_test, predictions):
             "auc": {
                 "value": roc_auc,
             },
-            "pr_auc": {
+            "aucpr": {
                 "value": pr_auc,
             },
             "precision": {
@@ -131,7 +131,8 @@ if __name__ == "__main__":
         tar.extractall(path=".")
 
     logger.debug("Loading xgboost model.")
-    model = pickle.load(open("xgboost-model", "rb"))
+    model = xgboost.Booster()
+    model.load_model('xgboost-model')
 
     logger.debug("Reading test data.")
     test_path = "/opt/ml/processing/test/test.csv"

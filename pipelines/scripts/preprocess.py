@@ -33,52 +33,60 @@ def merge_two_dicts(x, y):
 if __name__ == "__main__":
     logger.debug("Starting preprocessing.")
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dataset-name", type=str, required=True)
+    parser.add_argument("--dataset-path", type=str, required=True)
+    parser.add_argument("--target-column", type=str, required=True)
+    parser.add_argument("--ml-task", type=str, required=True)
+    parser.add_argument("--drop-columns", type=str, nargs='+', default=[], help="List of column names to drop")
     args = parser.parse_args()
 
     base_dir = "/opt/ml/processing"
     pathlib.Path(f"{base_dir}/data").mkdir(parents=True, exist_ok=True)
-    dataset_name = args.dataset_name
-    dataset_path = datasets[dataset_name]['path']
-    dataset_header = datasets[dataset_name]['header']
-    feature_columns = datasets[dataset_name]['feature_columns']
-    feature_columns_names = list(feature_columns.keys())
-    label_column = datasets[dataset_name]['label_column']
-    label_column_name = datasets[dataset_name]['label_column_name']
-    drop_columns = datasets[dataset_name]['drop_columns']
-    categorical_features = [key for key, value in feature_columns.items() if value == str]
+    dataset_path = args.dataset_path
+    ml_task = args.ml_task
+    target_column = args.target_column
+    drop_columns = args.drop_columns
+    # dataset_path = datasets[dataset_name]['path']
+    # dataset_header = datasets[dataset_name]['header']
+    # feature_columns = datasets[dataset_name]['feature_columns']
+    # feature_columns_names = list(feature_columns.keys())
+    # label_column = datasets[dataset_name]['label_column']
+    # target_column = datasets[dataset_name]['target_column']
+    # drop_columns = datasets[dataset_name]['drop_columns']
 
     bucket = dataset_path.split("/")[2]
     key = "/".join(dataset_path.split("/")[3:])
 
     logger.info("Downloading data from bucket: %s, key: %s", bucket, key)
-    fn = f"{base_dir}/data/abalone-dataset.csv"
+    fn = f"{base_dir}/data/dataset.csv"
     s3 = boto3.resource("s3")
     s3.Bucket(bucket).download_file(key, fn)
 
     logger.debug("Reading downloaded data.")
-    # For headerless CSV file we need to specify the column names.
-    if dataset_header:
-        df = pd.read_csv(
-            fn,
-            dtype=merge_two_dicts(feature_columns, label_column),
-        )
-    else:
-        df = pd.read_csv(
-            fn,
-            header=None,
-            names=feature_columns_names + [label_column_name],
-            dtype=merge_two_dicts(feature_columns, label_column),
-        )
+    df = pd.read_csv(fn)
+    # # For headerless CSV file we need to specify the column names.
+    # if dataset_header:
+    #     df = pd.read_csv(
+    #         fn,
+    #         # dtype=merge_two_dicts(feature_columns, label_column),
+    #     )
+    # else:
+    #     df = pd.read_csv(
+    #         fn,
+    #         header=None,
+    #         names=feature_columns_names + [target_column],
+    #         dtype=merge_two_dicts(feature_columns, label_column),
+    #     )
     os.unlink(fn)
     
+    feature_columns = [col for col in df.columns if col != target_column]
     if drop_columns:
         df.drop(drop_columns, axis=1, inplace=True)
-        used_cols = [col for col in list(feature_columns_names) if col not in drop_columns]
+        used_cols = [col for col in feature_columns if col not in drop_columns]
     else:
-        used_cols = list(feature_columns_names)
+        used_cols = feature_columns
         
     logger.debug("Defining transformers.")
+    categorical_features = df[used_cols].select_dtypes(include=['object', 'category']).columns.tolist()
     numeric_features = [col for col in used_cols if col not in categorical_features]
     numeric_transformer = Pipeline(
         steps=[("imputer", SimpleImputer(strategy="median")), ("scaler", StandardScaler())]
@@ -96,9 +104,14 @@ if __name__ == "__main__":
         ]
     )
 
+    logger.info("Convert target colum into integer categories.")
+    if ml_task == "classification":
+        df[target_column] = pd.Categorical(df[target_column])
+        df[target_column] = df[target_column].cat.codes
+    
     logger.info("Applying transforms.")
     X = df.sample(frac=1).reset_index(drop=True)
-    y = X.pop(label_column_name)
+    y = X.pop(target_column)
     preprocess.fit(X)
     
     logger.info("Writing out preprocessing object to %s.", base_dir)
@@ -107,8 +120,18 @@ if __name__ == "__main__":
         pickle.dump(preprocess, file)
 
     logger.info("Splitting %d rows of data into train, validation, test datasets.", len(X))
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=42)
-    X_train, X_valid, y_train, y_valid = train_test_split(X_train, y_train, test_size=0.25, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, 
+        test_size=0.20, 
+        random_state=42, 
+        stratify=y if ml_task == "classification" else None
+    )
+    X_train, X_valid, y_train, y_valid = train_test_split(
+        X_train, y_train, 
+        test_size=0.25, 
+        random_state=42, 
+        stratify=y_train if ml_task == "classification" else None
+    )
     
     logger.info("Writing out datasets to %s.", base_dir)
     # the first variable is assumed to be the target variable
@@ -127,7 +150,7 @@ if __name__ == "__main__":
     test.to_csv(f"{base_dir}/test/test.csv", header=False, index=False)
     
     train = X_train
-    train[label_column_name] = y_train
+    train[target_column] = y_train
     train.to_csv(f"{base_dir}/train_source/train.csv", header=True, index=False)
     
     
