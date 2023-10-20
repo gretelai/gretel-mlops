@@ -89,35 +89,34 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--strategy", type=str, required=True)
     parser.add_argument("--generate-factor", type=float, default=1.0)
-    parser.add_argument("--target-balance", type=str, required=True)
+    parser.add_argument("--target-balance", type=float, default=1.0)
     parser.add_argument("--target-column", type=str, required=True)
     parser.add_argument("--ml-eval-metric", type=str, required=True)
     args = parser.parse_args()
     
     strategy = args.strategy
-    generate_factor = float(args.generate_factor)
-    target_balance = float(args.target_balance)
+    generate_factor = args.generate_factor
+    target_balance = args.target_balance
     target_column = args.target_column
     ml_eval_metric = args.ml_eval_metric
     
     logger.info("Reading train data.")
-    source_path = "/opt/ml/processing/train_source/train.csv"
-    # source_path = "tmp/train.csv"
+    # source_path = "/opt/ml/processing/train_source/train.csv"
+    source_path = "tmp/train.csv"
     data_source = pd.read_csv(source_path)
 
     logger.info("Reading validation data.")
-    validation_path = "/opt/ml/processing/validation/validation.csv"
-    # validation_path = "tmp/validation.csv"
-    data_validation = pd.read_csv(validation_path, header=None)
-    data_validation = data_validation.rename(columns={0: target_column})
+    # validation_path = "/opt/ml/processing/validation/validation.csv"
+    validation_path = "tmp/validation.csv"
+    data_validation = pd.read_csv(validation_path)
     
-    output_dir = "/opt/ml/processing/gretel"
-    # output_dir = "tmp/gretel"
+    # output_dir = "/opt/ml/processing/gretel"
+    output_dir = "tmp/gretel"
     pathlib.Path(output_dir).mkdir(parents=True, exist_ok=True)
 
     logger.info("Loading preprocessing model.")
-    preprocess_path = "/opt/ml/processing/preprocess/preprocess.pkl"
-    # preprocess_path = "tmp/preprocess.pkl"
+    # preprocess_path = "/opt/ml/processing/preprocess/preprocess.pkl"
+    preprocess_path = "tmp/preprocess.pkl"
     preprocess = pickle.load(open(preprocess_path, "rb"))
     
     logger.info("Configuring a Gretel session.")
@@ -144,15 +143,15 @@ if __name__ == "__main__":
     tuner_config = GretelHyperParameterConfig(
         project=project,
         artifact_id=artifact_id,
-        epoch_choices=[400, 600, 800, 1200, 1400, 1600],
+        epoch_choices=[10],#400, 600, 800, 1200, 1400, 1600],
         batch_size_choices=[500, 1000, 2000],
         base_config=config,
         metric=optimization_metric,
     )
 
     tuner = GretelHyperParameterTuner(tuner_config)
-    N_TRIALS = 16
-    MAX_JOBS = 4
+    N_TRIALS = 1#6
+    MAX_JOBS = 1#4
 
     print(f"Running optuna with {N_TRIALS} trials and {MAX_JOBS}")
     tuner_results = tuner.run(n_trials=N_TRIALS, n_jobs=min(N_TRIALS, MAX_JOBS))

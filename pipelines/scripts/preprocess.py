@@ -22,6 +22,8 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 logger.addHandler(logging.StreamHandler())
 
+from pdb import set_trace as bp
+
 
 def merge_two_dicts(x, y):
     """Merges two dicts, returning a new copy."""
@@ -40,19 +42,13 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     base_dir = "/opt/ml/processing"
+    # base_dir = "tmp/processing"
     pathlib.Path(f"{base_dir}/data").mkdir(parents=True, exist_ok=True)
     dataset_path = args.dataset_path
     ml_task = args.ml_task
     target_column = args.target_column
     drop_columns = args.drop_columns
-    # dataset_path = datasets[dataset_name]['path']
-    # dataset_header = datasets[dataset_name]['header']
-    # feature_columns = datasets[dataset_name]['feature_columns']
-    # feature_columns_names = list(feature_columns.keys())
-    # label_column = datasets[dataset_name]['label_column']
-    # target_column = datasets[dataset_name]['target_column']
-    # drop_columns = datasets[dataset_name]['drop_columns']
-
+    
     bucket = dataset_path.split("/")[2]
     key = "/".join(dataset_path.split("/")[3:])
 
@@ -63,19 +59,6 @@ if __name__ == "__main__":
 
     logger.debug("Reading downloaded data.")
     df = pd.read_csv(fn)
-    # # For headerless CSV file we need to specify the column names.
-    # if dataset_header:
-    #     df = pd.read_csv(
-    #         fn,
-    #         # dtype=merge_two_dicts(feature_columns, label_column),
-    #     )
-    # else:
-    #     df = pd.read_csv(
-    #         fn,
-    #         header=None,
-    #         names=feature_columns_names + [target_column],
-    #         dtype=merge_two_dicts(feature_columns, label_column),
-    #     )
     os.unlink(fn)
     
     feature_columns = [col for col in df.columns if col != target_column]
@@ -84,7 +67,7 @@ if __name__ == "__main__":
         used_cols = [col for col in feature_columns if col not in drop_columns]
     else:
         used_cols = feature_columns
-        
+    
     logger.debug("Defining transformers.")
     categorical_features = df[used_cols].select_dtypes(include=['object', 'category']).columns.tolist()
     numeric_features = [col for col in used_cols if col not in categorical_features]
@@ -101,7 +84,8 @@ if __name__ == "__main__":
         transformers=[
             ("num", numeric_transformer, numeric_features),
             ("cat", categorical_transformer, categorical_features),
-        ]
+        ],
+        sparse_threshold=0
     )
 
     logger.info("Convert target colum into integer categories.")
@@ -116,6 +100,7 @@ if __name__ == "__main__":
     
     logger.info("Writing out preprocessing object to %s.", base_dir)
     preprocess_path = f"{base_dir}/preprocess/preprocess.pkl"
+    # preprocess_path = f"tmp/preprocess.pkl"
     with open(preprocess_path, 'wb') as file:
         pickle.dump(preprocess, file)
 
@@ -137,17 +122,17 @@ if __name__ == "__main__":
     # the first variable is assumed to be the target variable
     train_pre = pd.DataFrame(preprocess.transform(X_train))
     train = pd.concat([y_train.reset_index(drop=True), train_pre], axis=1) 
-    train.to_csv(f"{base_dir}/train/train.csv", header=False, index=False)
+    train.to_csv(f"{base_dir}/train/train.csv", header=True, index=False)
     
     validation_pre = pd.DataFrame(preprocess.transform(X_valid))
     validation = pd.concat([y_valid.reset_index(drop=True), validation_pre], axis=1)
     validation.to_csv(
-        f"{base_dir}/validation/validation.csv", header=False, index=False
+        f"{base_dir}/validation/validation.csv", header=True, index=False
     )
     
     test_pre = pd.DataFrame(preprocess.transform(X_test))
     test = pd.concat([y_test.reset_index(drop=True), test_pre], axis=1)
-    test.to_csv(f"{base_dir}/test/test.csv", header=False, index=False)
+    test.to_csv(f"{base_dir}/test/test.csv", header=True, index=False)
     
     train = X_train
     train[target_column] = y_train

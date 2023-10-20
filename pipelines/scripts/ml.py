@@ -164,7 +164,7 @@ def measure_ml_utility(
     
     y_pred = clf.predict(X_test)
     y_proba = clf.predict_proba(X_test) if is_multi_class else clf.predict_proba(X_test)[:, 1]
-
+    
     logger.info(
         "ML utility - Classification Report:\n"
         f"{ml_metrics.classification_report(y_test, y_pred, target_names=['negative', 'positive'])}"

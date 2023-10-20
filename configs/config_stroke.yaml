@@ -1,8 +1,8 @@
 dataset:
-  name: churn
-  path: s3://gretel-public-website/datasets/Churn_Modelling.csv
-  target_column: Exited
-  drop_columns: CustomerId
+  name: healthcare-stroke-data
+  path: s3://gretel-datasets/healthcare-dataset-stroke-data.csv
+  target_column: stroke
+  drop_columns: id
 ML:
   ml_task: classification
   objective: binary:logistic

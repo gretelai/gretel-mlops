@@ -1,0 +1,15 @@
+dataset:
+  name: abalone
+  path: s3://gretel-datasets/abalone-dataset-header.csv
+  target_column: rings
+  drop_columns: null
+ML:
+  ml_task: regression
+  objective: reg:linear
+  objective_type: Minimize
+  ml_eval_metric: rmse
+  ml_metric_threshold: 6.0
+gretel:
+  strategy: augment
+  generate_factor: 1.0
+  target_balance: null

@@ -382,7 +382,10 @@ def get_pipeline(
             ProcessingOutput(output_name="evaluation", source="/opt/ml/processing/evaluation"),
         ],
         code=os.path.join(BASE_DIR, "evaluate.py"),
-        arguments=["--ml-task", ml_task],
+        arguments=[
+            "--ml-task", ml_task,
+            "--target-column", target_column
+        ],
     )
     evaluation_report = PropertyFile(
         name="EvaluationReport",

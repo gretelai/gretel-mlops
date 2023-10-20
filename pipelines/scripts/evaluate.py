@@ -19,6 +19,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 logger.addHandler(logging.StreamHandler())
 
+from pdb import set_trace as bp
 
 def compute_optimal_f1(y_test, predictions):
 
@@ -123,10 +124,13 @@ if __name__ == "__main__":
     logger.debug("Starting evaluation.")
     parser = argparse.ArgumentParser()
     parser.add_argument("--ml-task", type=str, default="classification")
+    parser.add_argument("--target-column", type=str, required=True)
     args = parser.parse_args()
     
     ml_task = args.ml_task
+    target_column = args.target_column
     model_path = "/opt/ml/processing/model/model.tar.gz"
+    # model_path = "tmp/model.tar.gz"
     with tarfile.open(model_path) as tar:
         tar.extractall(path=".")
 
@@ -136,11 +140,11 @@ if __name__ == "__main__":
 
     logger.debug("Reading test data.")
     test_path = "/opt/ml/processing/test/test.csv"
-    df = pd.read_csv(test_path, header=None)
+    # test_path = "tmp/test.csv"
+    df = pd.read_csv(test_path)
 
     logger.debug("Reading test data.")
-    y_test = df.iloc[:, 0].to_numpy()
-    df.drop(df.columns[0], axis=1, inplace=True)
+    y_test = df.pop(target_column)
     X_test = xgboost.DMatrix(df.values)
 
     logger.info("Performing predictions against test data.")
