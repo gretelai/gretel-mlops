@@ -1,6 +1,8 @@
 dataset:
   name: abalone
-  path: s3://gretel-datasets/abalone-dataset-header.csv
+  train_path: s3://gretel-datasets/ml_ops/abalone/train.csv
+  validation_path: null
+  test_path: null
   target_column: rings
   drop_columns: null
 ML:

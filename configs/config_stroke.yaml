@@ -1,6 +1,8 @@
 dataset:
   name: healthcare-stroke-data
-  path: s3://gretel-datasets/healthcare-dataset-stroke-data.csv
+  train_path: s3://gretel-datasets/ml_ops/stroke/train.csv
+  validation_path: null
+  test_path: null
   target_column: stroke
   drop_columns: id
 ML:

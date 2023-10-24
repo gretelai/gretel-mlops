@@ -13,8 +13,13 @@ from sklearn.base import ClassifierMixin
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.model_selection import ParameterGrid, StratifiedKFold
+from sklearn.metrics import (
+    roc_auc_score, average_precision_score, precision_recall_curve, confusion_matrix,
+    mean_squared_error, mean_absolute_error, r2_score
+)
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler, label_binarize
+
 from sklearn.utils import resample
 from tabulate import tabulate
 from tqdm import tqdm
@@ -29,6 +34,113 @@ warnings.filterwarnings("ignore", category=FutureWarning, module="xgboost")
 
 from pdb import set_trace as bp
 
+
+def naive_upsample(df, target_column="TARGET", target_balance=1.0):
+    
+    over_sampler = RandomOverSampler(sampling_strategy=target_balance)
+    y = df.pop(target_column)
+    df_resampled, y_resampled = over_sampler.fit_resample(df, y)
+    df_resampled[target_column] = y_resampled
+    
+    return df_resampled
+
+def compute_optimal_f1(y_test, predictions):
+
+    precision, recall, thresholds = precision_recall_curve(y_test, predictions)
+    selection = ~((precision==0)&(recall==0))
+    precision = precision[selection]
+    recall = recall[selection]
+    thresholds = thresholds[selection[:-1]]
+
+    # Calculate the f-score
+    f1_scores = 2 * (precision * recall) / (precision + recall)
+
+    # Find the threshold that maximizes the F1 score
+    best_threshold = thresholds[np.argmax(f1_scores)]
+    best_f1_score = np.max(f1_scores)
+
+    # Calculate the corresponding precision and recall at the optimal threshold
+    optimal_precision = precision[np.argmax(f1_scores)]
+    optimal_recall = recall[np.argmax(f1_scores)]
+
+    # Compute the confusion matrix at the optimal threshold
+    predictions_binary = (predictions >= best_threshold).astype(int)
+    conf_matrix = confusion_matrix(y_test, predictions_binary)
+    
+    return best_f1_score, optimal_precision, optimal_recall, conf_matrix
+
+
+def generate_classification_report(y_test, predictions):
+    # Calculate classification metrics  
+    f1, precision, recall, conf_matrix = compute_optimal_f1(y_test, predictions)
+
+    # Calculate AUC using sklearn's functions
+    roc_auc = roc_auc_score(y_test, predictions)
+    pr_auc = average_precision_score(y_test, predictions)
+
+    # Create a report dictionary with both the metrics and their standard deviations
+    report_dict = {
+        "classification_metrics": {
+            "auc": {
+                "value": roc_auc,
+            },
+            "aucpr": {
+                "value": pr_auc,
+            },
+            "precision": {
+                "value": precision,
+            },
+            "recall": {
+                "value": recall,
+            },
+            "f1": {
+                "value": f1,
+            },
+            "confusion_matrix": {
+                "value": conf_matrix.tolist(),
+            }
+        },
+    }
+    
+    return report_dict
+
+
+def generate_regression_report(y_test, predictions):
+    # Calculate regression metrics
+    mse = mean_squared_error(y_test, predictions)
+    rmse = np.sqrt(mse)
+    mae = mean_absolute_error(y_test, predictions)
+    r2 = r2_score(y_test, predictions)
+
+    # Calculate standard deviations
+    mse_std = np.std((y_test - predictions) ** 2)
+    rmse_std = np.std(np.abs(y_test - predictions))
+    mae_std = np.std(np.abs(y_test - predictions))
+    r2_std = np.std(1 - ((y_test - predictions) ** 2) / ((y_test - np.mean(y_test)) ** 2))
+
+    # Create a report dictionary with both the metrics and their standard deviations
+    report_dict = {
+        "regression_metrics": {
+            "mse": {
+                "value": mse,
+                "std": mse_std
+            },
+            "mae": {
+                "value": mae,
+                "std": mae_std
+            },
+            "R2": {
+                "value": r2,
+                "std": r2_std
+            },
+            "rmse": {
+                "value": rmse,
+                "std": rmse_std
+            },
+        },
+    }
+    
+    return report_dict
 
 @dataclass
 class MLResults:
@@ -201,11 +313,4 @@ def measure_ml_utility(
     )
 
 
-def naive_upsample(df, target_column="TARGET", target_balance=1.0):
-    
-    over_sampler = RandomOverSampler(sampling_strategy=target_balance)
-    y = df.pop(target_column)
-    df_resampled, y_resampled = over_sampler.fit_resample(df, y)
-    df_resampled[target_column] = y_resampled
-    
-    return df_resampled
+

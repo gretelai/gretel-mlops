@@ -1,6 +1,7 @@
 """Feature engineers the abalone dataset."""
 import argparse
 import logging
+import json
 import os
 import pathlib
 import pickle
@@ -10,8 +11,8 @@ import tempfile
 import boto3
 import numpy as np
 import pandas as pd
+import xgboost as xgb
 
-from datasets import datasets
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
@@ -32,28 +33,12 @@ def merge_two_dicts(x, y):
     return z
 
 
-if __name__ == "__main__":
-    logger.debug("Starting preprocessing.")
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--dataset-path", type=str, required=True)
-    parser.add_argument("--target-column", type=str, required=True)
-    parser.add_argument("--ml-task", type=str, required=True)
-    parser.add_argument("--drop-columns", type=str, nargs='+', default=[], help="List of column names to drop")
-    args = parser.parse_args()
-
-    base_dir = "/opt/ml/processing"
-    # base_dir = "tmp/processing"
-    pathlib.Path(f"{base_dir}/data").mkdir(parents=True, exist_ok=True)
-    dataset_path = args.dataset_path
-    ml_task = args.ml_task
-    target_column = args.target_column
-    drop_columns = args.drop_columns
-    
-    bucket = dataset_path.split("/")[2]
-    key = "/".join(dataset_path.split("/")[3:])
+def read_data(path, base_dir):
+    bucket = path.split("/")[2]
+    key = "/".join(path.split("/")[3:])
 
     logger.info("Downloading data from bucket: %s, key: %s", bucket, key)
-    fn = f"{base_dir}/data/dataset.csv"
+    fn = f"{base_dir}/data/train.csv"
     s3 = boto3.resource("s3")
     s3.Bucket(bucket).download_file(key, fn)
 
@@ -61,6 +46,32 @@ if __name__ == "__main__":
     df = pd.read_csv(fn)
     os.unlink(fn)
     
+    return df
+    
+
+
+if __name__ == "__main__":
+    logger.debug("Starting preprocessing.")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--train-path", type=str, required=True)
+    parser.add_argument("--validation-path", type=str, default=None)
+    parser.add_argument("--test-path", type=str, default=None)
+    parser.add_argument("--target-column", type=str, required=True)
+    parser.add_argument("--ml-task", type=str, required=True)
+    parser.add_argument("--drop-columns", type=str, nargs='+', default=[], help="List of column names to drop")
+    args = parser.parse_args()
+
+    base_dir = "/opt/ml/processing"
+    # base_dir = "/home/sagemaker-user/tmp1"
+    pathlib.Path(f"{base_dir}/data").mkdir(parents=True, exist_ok=True)
+    train_path = args.train_path
+    validation_path = args.validation_path
+    test_path = args.test_path
+    ml_task = args.ml_task
+    target_column = args.target_column
+    drop_columns = args.drop_columns
+    
+    df = read_data(train_path, base_dir)       
     feature_columns = [col for col in df.columns if col != target_column]
     if drop_columns:
         df.drop(drop_columns, axis=1, inplace=True)
@@ -94,9 +105,9 @@ if __name__ == "__main__":
         df[target_column] = df[target_column].cat.codes
     
     logger.info("Applying transforms.")
-    X = df.sample(frac=1).reset_index(drop=True)
-    y = X.pop(target_column)
-    preprocess.fit(X)
+    X_train = df.sample(frac=1).reset_index(drop=True)
+    y_train = X_train.pop(target_column)
+    preprocess.fit(X_train)
     
     logger.info("Writing out preprocessing object to %s.", base_dir)
     preprocess_path = f"{base_dir}/preprocess/preprocess.pkl"
@@ -104,20 +115,32 @@ if __name__ == "__main__":
     with open(preprocess_path, 'wb') as file:
         pickle.dump(preprocess, file)
 
-    logger.info("Splitting %d rows of data into train, validation, test datasets.", len(X))
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, 
-        test_size=0.20, 
-        random_state=42, 
-        stratify=y if ml_task == "classification" else None
-    )
-    X_train, X_valid, y_train, y_valid = train_test_split(
-        X_train, y_train, 
-        test_size=0.25, 
-        random_state=42, 
-        stratify=y_train if ml_task == "classification" else None
-    )
+    logger.info("Splitting %d rows of data into train, validation, test datasets.", len(X_train))
     
+    if test_path:
+        df_test = read_data(test_path, base_dir)
+        X_test = df_test.sample(frac=1).reset_index(drop=True)
+        y_test = X_test.pop(target_column)
+    else:
+        X_train, X_test, y_train, y_test = train_test_split(
+            X_train, y_train, 
+            test_size=0.20, 
+            random_state=42, 
+            stratify=y_train if ml_task == "classification" else None
+        )
+    
+    if validation_path:
+        df_valid = read_data(validation_path, base_dir)
+        X_valid = df_valid.sample(frac=1).reset_index(drop=True)
+        y_valid = X_valid.pop(target_column)
+    else:
+        X_train, X_valid, y_train, y_valid = train_test_split(
+            X_train, y_train, 
+            test_size=0.25, 
+            random_state=42, 
+            stratify=y_train if ml_task == "classification" else None
+        )
+
     logger.info("Writing out datasets to %s.", base_dir)
     # the first variable is assumed to be the target variable
     train_pre = pd.DataFrame(preprocess.transform(X_train))
