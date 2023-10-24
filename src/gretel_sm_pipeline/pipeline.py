@@ -228,7 +228,7 @@ def get_pipeline(
         sagemaker_session=pipeline_session,
         role=role,
         estimator_cls=PyTorch,
-        framework_version="2.0.1",
+        framework_version="2.0",
         py_version="py310",
     )
     step_args = script_preprocess.run(
@@ -258,7 +258,7 @@ def get_pipeline(
         sagemaker_session=pipeline_session,
         role=role,
         estimator_cls=PyTorch,
-        framework_version="2.0.1",
+        framework_version="2.0",
         py_version="py310",
     )
     arguments = [
