@@ -1,4 +1,11 @@
 """Script to run Gretel synthetics on source data."""
+import sys
+import subprocess
+
+subprocess.check_call([
+    sys.executable, "-m", "pip", "install", "gretel-client[aws]", "git+https://github.com/gretelai/gretel-tuner",
+])
+
 import argparse
 import logging
 import pathlib

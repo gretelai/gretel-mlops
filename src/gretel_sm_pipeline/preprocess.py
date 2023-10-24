@@ -1,4 +1,10 @@
-"""Feature engineers the abalone dataset."""
+import sys
+import subprocess
+
+subprocess.check_call([
+    sys.executable, "-m", "pip", "install", "scikit-learn==1.3.0",
+])
+
 import argparse
 import logging
 import json
