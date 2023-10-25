@@ -176,16 +176,7 @@ def get_pipeline(
         default_value=dataset,
     )
 
-    # # dataset parameters
-    # objective = datasets[dataset]['objective']
-    # objective_type = datasets[dataset]['objective_type']
-    # ml_eval_metric = datasets[dataset]['ml_eval_metric']
-    # ml_metric_threshold = datasets[dataset]['ml_metric_threshold']
-    # label_column_name = datasets[dataset]['label_column_name']
-    # ml_task = datasets[dataset]['ml_task']
-    # gretel_strategy = datasets[dataset]['gretel_strategy']
-    # gretel_generate_factor = datasets[dataset]['gretel_generate_factor']
-    # gretel_target_balance = datasets[dataset]['gretel_target_balance']
+    # config parameters
     train_path = config['dataset']['train_path']
     validation_path = config['dataset']['validation_path']
     test_path = config['dataset']['test_path']
@@ -263,13 +254,16 @@ def get_pipeline(
     )
     arguments = [
         "--target-column", target_column,
-        "--ml-eval-metric", ml_eval_metric,
-        "--generate-factor", str(generate_factor),
-        "--target-balance", str(target_balance),
     ]
     if strategy:
         arguments += [
             "--strategy", strategy,
+            "--ml-eval-metric", ml_eval_metric,
+            "--generate-factor", str(generate_factor),
+            "--target-balance", str(target_balance),
+            "--ml-task", ml_task,
+            "--objective", objective,
+            "--objective-type", objective_type,
         ]
     step_args = script_gretel.run(
         inputs=[
@@ -347,27 +341,19 @@ def get_pipeline(
         max_parallel_jobs=4,
         objective_type=objective_type
     )
-#     if use_gretel:
-#         train_data = step_gretel.properties.ProcessingOutputConfig.Outputs["train_synth"].S3Output.S3Uri
-#     else:
-#         train_data = step_process.properties.ProcessingOutputConfig.Outputs["train"].S3Output.S3Uri
-    
-#     validation_data = step_process.properties.ProcessingOutputConfig.Outputs["validation"].S3Output.S3Uri
-    # train_data = "s3://sagemaker-us-east-1-524473328983/GretelPipeline-churn/nh1z7vsrbu0z/PreprocessData/output/train/train.csv"
-    # train_data = "s3://sagemaker-us-east-1-524473328983/GretelPipeline-credit/ozj0bqhvqrag/PreprocessData/output/train/train.csv"
-    # validation_data = "s3://sagemaker-us-east-1-524473328983/GretelPipeline-churn/45im22dq2z5j/PreprocessData/output/validation/validation.csv"
-    
+
     step_args = xgb_tuner.fit(
         inputs={
             "train": TrainingInput(
-                s3_data=step_gretel.properties.ProcessingOutputConfig.Outputs["train"].S3Output.S3Uri,
+                s3_data=step_gretel.properties.ProcessingOutputConfig.Outputs[
+                    "train"
+                ].S3Output.S3Uri,
                 content_type="text/csv",
             ),
             "validation": TrainingInput(
-                # s3_data=step_process.properties.ProcessingOutputConfig.Outputs[
-                #     "validation"
-                # ].S3Output.S3Uri,
-                s3_data=step_process.properties.ProcessingOutputConfig.Outputs["validation"].S3Output.S3Uri,
+                s3_data=step_process.properties.ProcessingOutputConfig.Outputs[
+                    "validation"
+                ].S3Output.S3Uri,
                 content_type="text/csv",
             ),
         },
@@ -379,14 +365,16 @@ def get_pipeline(
 
 
     # processing step for evaluation
-    script_eval = ScriptProcessor(
-        image_uri=image_uri,
+    script_eval = FrameworkProcessor(
         command=["python3"],
         instance_type=processing_instance_type,
         instance_count=1,
         base_job_name=f"{base_job_prefix}/script-model-eval",
         sagemaker_session=pipeline_session,
         role=role,
+        estimator_cls=PyTorch,
+        framework_version="2.0.1",
+        py_version="py310",
     )
     step_args = script_eval.run(
         inputs=[
@@ -405,7 +393,9 @@ def get_pipeline(
         outputs=[
             ProcessingOutput(output_name="evaluation", source="/opt/ml/processing/evaluation"),
         ],
-        code=os.path.join(BASE_DIR, "evaluate.py"),
+        # code=os.path.join(BASE_DIR, "evaluate.py"),
+        code="evaluate.py",
+        source_dir=BASE_DIR,
         arguments=[
             "--ml-task", ml_task,
             "--target-column", target_column
@@ -477,13 +467,6 @@ def get_pipeline(
         if_steps=[step_register],
         else_steps=[],
     )
-    
-#     if use_gretel:
-#         steps=[step_process, step_gretel, step_train, step_eval, step_cond]
-#     else:
-#         steps=[step_process, step_train, step_eval, step_cond]
-    
-    steps=[step_process]
     
     # pipeline instance
     pipeline = Pipeline(

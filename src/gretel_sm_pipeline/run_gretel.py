@@ -7,9 +7,6 @@ subprocess.check_call([
     "-m", "pip", "install",
     "gretel-client[aws]",
     "git+https://github.com/gretelai/gretel-tuner",
-    "imblearn",
-    "optuna",
-    "xgboost"
 ])
 
 import argparse
@@ -19,91 +16,39 @@ import pickle
 import json
 import boto3
 import os
-import sklearn
+import warnings
 
 import numpy as np
 import pandas as pd
+import xgboost as xgb
 
 from gretel_client import Gretel, configure_session
-from gretel_client.projects.models import read_model_config, Model
+from gretel_client.projects.models import read_model_config
 from gretel_client.projects import create_or_get_unique_project
 from gretel_client.helpers import poll
-from botocore.exceptions import ClientError
 from gretel_tuner import (
-    BaseTunerMetric,
-    GretelSQSMetric,
     GretelHyperParameterConfig,
     GretelHyperParameterTuner
 )
-from ml import measure_ml_utility, naive_upsample
+from utils import MLMetric, get_secret, naive_upsample
 
-from pdb import set_trace as bp
+warnings.filterwarnings('ignore')
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 logger.addHandler(logging.StreamHandler())
 
-def get_secret():
-
-    secret_name = "prod/Gretel/ApiKey"
-    region_name = "us-east-1"
-
-    # Create a Secrets Manager client
-    session = boto3.session.Session()
-    client = session.client(
-        service_name='secretsmanager',
-        region_name=region_name
-    )
-
-    try:
-        get_secret_value_response = client.get_secret_value(
-            SecretId=secret_name
-        )
-    except ClientError as e:
-        # For a list of exceptions thrown, see
-        # https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
-        raise e
-
-    # Decrypts secret using the associated KMS key.
-    secret = json.loads(get_secret_value_response['SecretString'])
-
-    return secret["gretelApiKey"]
-
-
-class MLMetric(BaseTunerMetric):
-    def __init__(self, df_test, preprocess, target_column, metric="f1"):
-        self.df_test = df_test
-        self.metric = metric
-        self.preprocess = preprocess
-        self.target_column = target_column
-
-    def __call__(self, model: Model):
-
-        df_synth = pd.read_csv(model.get_artifact_link("data_preview"), compression="gzip")
-        df_synth_target = df_synth.pop(self.target_column)
-        df_synth_pre = pd.DataFrame(preprocess.transform(df_synth))
-        df_synth = pd.concat([df_synth_target.reset_index(drop=True), df_synth_pre], axis=1)
-        
-        # update colums of test set to match synthetic data columns
-        self.df_test.columns = df_synth.columns
-        
-        results = measure_ml_utility(
-            df_real=df_synth,
-            df_holdout=self.df_test,
-            target_column=self.target_column,
-        )
-
-        return results.get_scores()[self.metric]
-        
-
 if __name__ == "__main__":
     
     parser = argparse.ArgumentParser()
+    parser.add_argument("--target-column", type=str, required=True)
     parser.add_argument("--strategy", type=str, default=None)
     parser.add_argument("--generate-factor", type=float, default=1.0)
     parser.add_argument("--target-balance", type=float, default=1.0)
-    parser.add_argument("--target-column", type=str, required=True)
-    parser.add_argument("--ml-eval-metric", type=str, required=True)
+    parser.add_argument("--ml-eval-metric", type=str, default="f1")
+    parser.add_argument("--ml-task", type=str, default="classification")
+    parser.add_argument("--objective", type=str, default="binary:logistic")
+    parser.add_argument("--objective-type", type=str, default="Maximize")
     args = parser.parse_args()
     
     strategy = args.strategy
@@ -114,23 +59,19 @@ if __name__ == "__main__":
     
     logger.info("Reading train data.")
     source_path = "/opt/ml/processing/train_source/train.csv"
-    # source_path = "/home/sagemaker-user/tmp/train.csv"
     data_source = pd.read_csv(source_path)
 
     logger.info("Reading validation data.")
     validation_path = "/opt/ml/processing/validation/validation.csv"
-    # validation_path = "/home/sagemaker-user/tmp/validation.csv"
     data_validation = pd.read_csv(validation_path)
     
     gretel_dir = "/opt/ml/processing/gretel"
     output_dir = "/opt/ml/processing/train"
-    # output_dir = "/home/sagemaker-user/tmp/gretel"
     pathlib.Path(gretel_dir).mkdir(parents=True, exist_ok=True)
     pathlib.Path(output_dir).mkdir(parents=True, exist_ok=True)
 
     logger.info("Loading preprocessing model.")
     preprocess_path = "/opt/ml/processing/preprocess/preprocess.pkl"
-    # preprocess_path = "/home/sagemaker-user/tmp/preprocess.pkl"
     preprocess = pickle.load(open(preprocess_path, "rb"))
     
     if strategy == None:
@@ -164,7 +105,6 @@ if __name__ == "__main__":
         config["models"][0]["actgan"]["privacy_filters"]["similarity"] = None
         config["models"][0]["actgan"]["generate"]["num_records"] = min(25_000, len(data_source))
 
-        # optimization_metric = GretelSQSMetric()
         optimization_metric = MLMetric(data_validation, preprocess, target_column, metric=ml_eval_metric)
         tuner_config = GretelHyperParameterConfig(
             project=project,
