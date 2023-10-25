@@ -3,7 +3,13 @@ import sys
 import subprocess
 
 subprocess.check_call([
-    sys.executable, "-m", "pip", "install", "gretel-client[aws]", "git+https://github.com/gretelai/gretel-tuner",
+    sys.executable,
+    "-m", "pip", "install",
+    "gretel-client[aws]",
+    "git+https://github.com/gretelai/gretel-tuner",
+    "imblearn",
+    "optuna",
+    "xgboost"
 ])
 
 import argparse
@@ -13,6 +19,7 @@ import pickle
 import json
 import boto3
 import os
+import sklearn
 
 import numpy as np
 import pandas as pd
@@ -36,7 +43,6 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 logger.addHandler(logging.StreamHandler())
 
-import sklearn
 def get_secret():
 
     secret_name = "prod/Gretel/ApiKey"
