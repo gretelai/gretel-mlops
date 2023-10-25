@@ -4,6 +4,7 @@ import subprocess
 subprocess.check_call([
     sys.executable,
     "-m", "pip", "install",
+    "gretel-client",
     "imblearn",
     "optuna",
     "xgboost"
@@ -19,7 +20,7 @@ import pandas as pd
 import xgboost as xgb
 
 from imblearn.over_sampling import RandomOverSampler
-from gretel_client.projects.models import read_model_config, Model
+from gretel_client.projects.models import Model
 from sklearn.model_selection import GridSearchCV, PredefinedSplit
 from sklearn.metrics import (
     roc_auc_score, average_precision_score, precision_recall_curve, confusion_matrix,
