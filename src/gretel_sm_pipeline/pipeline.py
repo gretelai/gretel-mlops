@@ -260,7 +260,6 @@ def get_pipeline(
             "--strategy", strategy,
             "--ml-eval-metric", ml_eval_metric,
             "--generate-factor", str(generate_factor),
-            "--target-balance", str(target_balance),
             "--ml-task", ml_task,
             "--objective", objective,
             "--objective-type", objective_type,
