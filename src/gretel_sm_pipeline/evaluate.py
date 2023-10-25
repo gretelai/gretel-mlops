@@ -1,4 +1,13 @@
 """Evaluation script for measuring mean squared error."""
+import sys
+import subprocess
+
+subprocess.check_call([
+    sys.executable,
+    "-m", "pip", "install",
+    "xgboost"
+])
+
 import argparse
 import json
 import logging
