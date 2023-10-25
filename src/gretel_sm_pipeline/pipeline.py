@@ -265,6 +265,10 @@ def get_pipeline(
             "--objective", objective,
             "--objective-type", objective_type,
         ]
+    if target_balance:
+        arguments += [
+            "--target-balance", str(target_balance),
+        ]
     step_args = script_gretel.run(
         inputs=[
             ProcessingInput(
