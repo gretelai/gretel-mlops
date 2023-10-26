@@ -161,10 +161,9 @@ if __name__ == "__main__":
         logger.info("Starting Gretel generation step.")
         RECORDS_TO_GENERATE = int(len(data_source) * generate_factor)
         generated = gretel.submit_generate(trained.model_id, num_records=RECORDS_TO_GENERATE)
-        df_synth = generated.synthetic_data
 
         logger.info("Augment training data with synthetic data .")
-        df_train_synth = pd.concat([data_source, df_synth], axis=0, ignore_index=True)
+        df_train_synth = pd.concat([data_source, generated.synthetic_data], axis=0, ignore_index=True)
 
         logger.info("Apply preprocessing transformations.")
         y_train_synth = df_train_synth.pop(target_column)
