@@ -134,6 +134,12 @@ def get_pipeline_custom_tags(new_tags, region, sagemaker_project_name=None):
         print(f"Error getting project tags: {e}")
     return new_tags
 
+def get_pipeline_result(Pipeline: pipeline):
+    try:
+        pipeline.describe()
+    except Exception as e:
+        print(f"Error getting project results: {e}")
+    return new_tags
 
 def get_pipeline(
     region,
@@ -466,10 +472,6 @@ def get_pipeline(
         if_steps=[step_register],
         else_steps=[],
     )
-    
-    eval_report = "{}/evaluation.json".format(
-                step_eval.arguments["ProcessingOutputConfig"]["Outputs"][0]["S3Output"]["S3Uri"]
-            )
 
     # pipeline instance
     pipeline = Pipeline(
