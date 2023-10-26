@@ -468,6 +468,10 @@ def get_pipeline(
         else_steps=[],
     )
     
+    eval_report = "{}/evaluation.json".format(
+                step_eval.arguments["ProcessingOutputConfig"]["Outputs"][0]["S3Output"]["S3Uri"]
+            )
+
     # pipeline instance
     pipeline = Pipeline(
         name=pipeline_name,
@@ -482,4 +486,4 @@ def get_pipeline(
         steps=[step_process, step_gretel, step_train, step_eval, step_cond],
         sagemaker_session=pipeline_session,
     )
-    return pipeline
+    return pipeline, eval_report
