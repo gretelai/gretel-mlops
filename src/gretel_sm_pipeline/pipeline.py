@@ -147,7 +147,6 @@ def get_pipeline(
     training_instance_type="ml.m5.xlarge",
     use_gretel=True,
     config=None
-    # dataset="abalone"
 ):
     """Gets a SageMaker ML Pipeline instance working with on a tabular dataset.
 
@@ -482,8 +481,7 @@ def get_pipeline(
             model_approval_status,
             dataset_name,
         ],
-        # steps=[step_process, step_gretel, step_train, step_bl_train, step_eval, step_bl_eval, step_cond],
         steps=[step_process, step_gretel, step_train, step_eval, step_cond],
         sagemaker_session=pipeline_session,
     )
-    return pipeline, eval_report
+    return pipeline
