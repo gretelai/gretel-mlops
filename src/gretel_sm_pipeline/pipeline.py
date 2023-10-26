@@ -448,7 +448,7 @@ def get_pipeline(
     left_condition = JsonGet(
         step_name=step_eval.name,
         property_file=evaluation_report,
-        json_path=f"{ml_task}_metrics.{ml_eval_metric}.value"
+        json_path=f"metrics.{ml_eval_metric}.value"
     )
     if objective_type == "Minimize":
         cond = ConditionLessThanOrEqualTo(

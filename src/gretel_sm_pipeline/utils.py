@@ -100,7 +100,7 @@ def generate_classification_report(y_test, predictions):
 
     # Create a report dictionary with both the metrics and their standard deviations
     report_dict = {
-        "classification_metrics": {
+        "metrics": {
             "auc": {
                 "value": roc_auc,
             },
@@ -139,7 +139,7 @@ def generate_regression_report(y_test, predictions):
 
     # Create a report dictionary with both the metrics and their standard deviations
     report_dict = {
-        "regression_metrics": {
+        "metrics": {
             "mse": {
                 "value": mse,
                 "std": mse_std
@@ -179,12 +179,12 @@ def objective(trial, X_train, y_train, X_val, y_val, task, objective, metric):
         model = xgb.XGBRegressor(**param)
         model.fit(X_train, y_train)
         y_pred = model.predict(X_val)
-        score = generate_regression_report(y_val, y_pred)['regression_metrics']
+        score = generate_regression_report(y_val, y_pred)['metrics']
     else:
         model = xgb.XGBClassifier(**param)
         model.fit(X_train, y_train)
         y_pred = model.predict(X_val)
-        score = generate_classification_report(y_val, y_pred)['classification_metrics']
+        score = generate_classification_report(y_val, y_pred)['metrics']
     return score[metric]['value']
 
 
