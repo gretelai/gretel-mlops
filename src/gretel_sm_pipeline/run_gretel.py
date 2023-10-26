@@ -55,7 +55,10 @@ if __name__ == "__main__":
     generate_factor = args.generate_factor
     target_balance = args.target_balance
     target_column = args.target_column
-    ml_eval_metric = args.ml_eval_metric      
+    ml_eval_metric = args.ml_eval_metric 
+    ml_task = args.ml_task
+    objective = args.objective 
+    objective_type = args.objective_type   
     
     logger.info("Reading train data.")
     source_path = "/opt/ml/processing/train_source/train.csv"
@@ -105,7 +108,15 @@ if __name__ == "__main__":
         config["models"][0]["actgan"]["privacy_filters"]["similarity"] = None
         config["models"][0]["actgan"]["generate"]["num_records"] = min(25_000, len(data_source))
 
-        optimization_metric = MLMetric(data_validation, preprocess, target_column, metric=ml_eval_metric)
+        optimization_metric = MLMetric(
+            data_validation, 
+            preprocess, 
+            target_column, 
+            metric=ml_eval_metric, 
+            task=ml_task, 
+            objective=objective, 
+            objective_type=objective_type
+        )
         tuner_config = GretelHyperParameterConfig(
             project=project,
             artifact_id=artifact_id,
