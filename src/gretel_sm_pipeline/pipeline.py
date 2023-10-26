@@ -445,23 +445,20 @@ def get_pipeline(
     )
 
     # condition step for evaluating model quality and branching execution
-    if ml_task is "regression":
+    left_condition = JsonGet(
+        step_name=step_eval.name,
+        property_file=evaluation_report,
+        json_path=f"{ml_task}_metrics.{ml_eval_metric}.value"
+    )
+    if objective_type == "Minimize":
         cond = ConditionLessThanOrEqualTo(
-            left=JsonGet(
-                step_name=step_eval.name,
-                property_file=evaluation_report,
-                json_path=f"regression_metrics.{ml_eval_metric}.value"
-            ),
+            left=left_condition,
             right=ml_metric_threshold,
         )
     else:
         cond = ConditionGreaterThan(
-            left=JsonGet(
-                step_name=step_eval.name,
-                property_file=evaluation_report,
-                json_path=f"classification_metrics.{ml_eval_metric}.value",
-            ),
-            right=ml_metric_threshold
+            left=left_condition,
+            right=ml_metric_threshold,
         )
     
     step_cond = ConditionStep(
