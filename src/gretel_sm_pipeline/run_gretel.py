@@ -93,7 +93,7 @@ if __name__ == "__main__":
         train.to_csv(train_data_path, header=False, index=False)
 
     else:
-        logger.info("Configuring a Gretel session.")
+        logger.info(f"Configuring a {mode} Gretel session.")
         GRETEL_API_KEY = get_secret()
 
         # configure_session(
