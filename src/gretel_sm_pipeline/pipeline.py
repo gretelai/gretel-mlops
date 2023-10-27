@@ -189,6 +189,7 @@ def get_pipeline(
     strategy = config['gretel']['strategy']
     generate_factor = config['gretel']['generate_factor']
     target_balance = config['gretel']['target_balance']
+    mode = config['gretel']['mode']
     sink_bucket = config['gretel']['sink_bucket']
 
     arguments = [
@@ -262,6 +263,7 @@ def get_pipeline(
             "--ml-task", ml_task,
             "--objective", objective,
             "--objective-type", objective_type,
+            "--mode", mode,
         ]
     if target_balance:
         arguments += [
