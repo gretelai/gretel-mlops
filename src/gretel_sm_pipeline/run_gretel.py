@@ -49,7 +49,7 @@ if __name__ == "__main__":
     parser.add_argument("--ml-task", type=str, default="classification")
     parser.add_argument("--objective", type=str, default="binary:logistic")
     parser.add_argument("--objective-type", type=str, default="Maximize")
-    parser.add_argument("--mode", type=str, default=None)
+    parser.add_argument("--mode", type=str, default="cloud")
     parser.add_argument("--sink-bucket", type=str, default=None)
     args = parser.parse_args()
     
