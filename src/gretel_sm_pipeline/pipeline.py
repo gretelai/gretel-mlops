@@ -182,13 +182,14 @@ def get_pipeline(
     drop_columns = config['dataset']['drop_columns']
     ml_task = config['ML']['ml_task']
     ml_eval_metric = config['ML']['ml_eval_metric']
-    strategy = config['gretel']['strategy']
-    generate_factor = config['gretel']['generate_factor']
-    target_balance = config['gretel']['target_balance']
     ml_eval_metric = config['ML']['ml_eval_metric']
     objective = config['ML']['objective']
     objective_type = config['ML']['objective_type']
     ml_metric_threshold = config['ML']['ml_metric_threshold']
+    strategy = config['gretel']['strategy']
+    generate_factor = config['gretel']['generate_factor']
+    target_balance = config['gretel']['target_balance']
+    sink_bucket = config['gretel']['sink_bucket']
 
     arguments = [
         "--train-path", train_path,
@@ -265,6 +266,10 @@ def get_pipeline(
     if target_balance:
         arguments += [
             "--target-balance", str(target_balance),
+        ]
+    if sink_bucket:
+        arguments += [
+            "--sink-bucket", sink_bucket,
         ]
     step_args = script_gretel.run(
         inputs=[
