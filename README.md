@@ -1,2 +1,2 @@
-## Gretel SageMaker ModelBuild
+## Gretel Pipelines
 
