@@ -96,12 +96,6 @@ if __name__ == "__main__":
         logger.info(f"Configuring a {mode} Gretel session.")
         GRETEL_API_KEY = get_secret()
 
-        # configure_session(
-        #     api_key=GRETEL_API_KEY,
-        #     validate=True,
-        # )
-        # project = create_or_get_unique_project(name=GRETEL_PROJECT_NAME)
-
         GRETEL_PROJECT_NAME = 'sagemaker-pipelines-gretel-hyptuning'
         gretel = Gretel(
           project_name=GRETEL_PROJECT_NAME,

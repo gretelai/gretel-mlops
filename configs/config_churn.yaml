@@ -15,3 +15,5 @@ gretel:
   strategy: balance
   generate_factor: 1.0
   target_balance: 1.0
+  mode: cloud
+  sink_bucket: null
