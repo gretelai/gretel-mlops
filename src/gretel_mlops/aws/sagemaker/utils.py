@@ -206,7 +206,8 @@ class MLMetric:
         
         # update colums of test set to match synthetic data columns
         X_val = self.df_test.copy()
-        y_val = X_val.pop(self.target_column)
+        # y_val = X_val.pop(self.target_column)
+        y_val = X_val.pop('0')
         X_val.columns = X_train.columns
 
         study = optuna.create_study(direction=self.objective_type.lower())
