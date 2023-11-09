@@ -21,7 +21,6 @@ import xgboost as xgb
 
 from imblearn.over_sampling import RandomOverSampler
 from gretel_client.projects.models import Model
-from sklearn.model_selection import GridSearchCV, PredefinedSplit
 from sklearn.metrics import (
     roc_auc_score, average_precision_score, precision_recall_curve, confusion_matrix,
     mean_squared_error, mean_absolute_error, r2_score
@@ -171,10 +170,9 @@ def objective(trial, X_train, y_train, X_val, y_val, task, objective, metric):
         'alpha': trial.suggest_float('alpha', 0, 2),
         'max_depth': trial.suggest_int('max_depth', 1, 10),
         'num_round': trial.suggest_int('num_round', 100, 500),
-        'rate_drop': 0.3,
-        'tweedie_variance_power': 1.4
+        'rate_drop': trial.suggest_float('rate_drop', 0.2, 0.4),
+        'tweedie_variance_power': trial.suggest_float('tweedie_variance_power', 1.2, 1.6),
     }
-
     if task == 'regression':
         model = xgb.XGBRegressor(**param)
         model.fit(X_train, y_train)
