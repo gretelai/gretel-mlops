@@ -6,10 +6,10 @@ import google.cloud.aiplatform as aip
 from kfp import dsl
 from .components import (
     preprocess_component,
-    gretel_component,
-    train_component,
-    evaluate_component,
-    register_component
+    # gretel_component,
+    # train_component,
+    # evaluate_component,
+    # register_component
 )
 
 ##
@@ -34,33 +34,33 @@ def create_pipeline(
           config=config
         )
     
-        gretel_op = gretel_component(
-            config=config,
-            input_dir=preprocess_op.output,
-            gretel_api_key=gretel_api_key
-            )
+        # gretel_op = gretel_component(
+        #     config=config,
+        #     input_dir=preprocess_op.output,
+        #     gretel_api_key=gretel_api_key
+        #     )
 
-        train_op = train_component(
-            config=config,
-            input_dir=preprocess_op.output,
-            gretel_dir=gretel_op.output
-            )
+        # train_op = train_component(
+        #     config=config,
+        #     input_dir=preprocess_op.output,
+        #     gretel_dir=gretel_op.output
+        #     )
 
-        eval_op = evaluate_component(
-            config=config,
-            input_dir=preprocess_op.output,
-            model_dir=train_op.output
-            )
+        # eval_op = evaluate_component(
+        #     config=config,
+        #     input_dir=preprocess_op.output,
+        #     model_dir=train_op.output
+        #     )
 
-        register_op = register_component(
-            config=config,
-            model_display_name=model_display_name,
-            model_image_uri=model_image_uri,
-            project=project_id,
-            location=region,
-            eval_dir=eval_op.output,
-            model_dir=train_op.output
-            )
+        # register_op = register_component(
+        #     config=config,
+        #     model_display_name=model_display_name,
+        #     model_image_uri=model_image_uri,
+        #     project=project_id,
+        #     location=region,
+        #     eval_dir=eval_op.output,
+        #     model_dir=train_op.output
+        #     )
 
     return pipeline
 
