@@ -41,6 +41,8 @@ logger.addHandler(logging.StreamHandler())
 if __name__ == "__main__":
     
     parser = argparse.ArgumentParser()
+    parser.add_argument("--gretel-secret", required=True)
+    parser.add_argument("--region", required=True)
     parser.add_argument("--target-column", type=str, required=True)
     parser.add_argument("--strategy", type=str, default=None)
     parser.add_argument("--generate-factor", type=float, default=1.0)
@@ -53,7 +55,8 @@ if __name__ == "__main__":
     parser.add_argument("--sink-bucket", type=str, default=None)
     args = parser.parse_args()
     
-    strategy = args.strategy
+    gretel_secret = args.gretel_secret
+    region = args.region
     generate_factor = args.generate_factor
     target_balance = args.target_balance
     target_column = args.target_column
@@ -94,7 +97,7 @@ if __name__ == "__main__":
 
     else:
         logger.info(f"Configuring a {mode} Gretel session.")
-        GRETEL_API_KEY = get_secret()
+        GRETEL_API_KEY = get_secret(gretel_secret, region)
 
         GRETEL_PROJECT_NAME = 'sagemaker-pipelines-gretel-hyptuning'
         gretel = Gretel(

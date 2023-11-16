@@ -144,7 +144,7 @@ def get_pipeline(
     base_job_prefix="Gretel",
     processing_instance_type="ml.m5.xlarge",
     training_instance_type="ml.m5.xlarge",
-    use_gretel=True,
+    gretel_secret=None,
     config=None
 ):
     """Gets a SageMaker ML Pipeline instance working with on a tabular dataset.
@@ -254,6 +254,8 @@ def get_pipeline(
     )
     arguments = [
         "--target-column", target_column,
+        "--gretel-secret", gretel_secret,
+        "--region", region,
     ]
     if strategy:
         arguments += [

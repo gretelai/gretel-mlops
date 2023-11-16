@@ -19,6 +19,7 @@ import numpy as np
 import pandas as pd
 import xgboost as xgb
 
+from botocore.exceptions import ClientError
 from imblearn.over_sampling import RandomOverSampler
 from gretel_client.projects.models import Model
 from sklearn.metrics import (
@@ -28,10 +29,10 @@ from sklearn.metrics import (
 
 warnings.filterwarnings('ignore')
 
-def get_secret():
+def get_secret(secret_name, region):
 
-    secret_name = "prod/Gretel/ApiKey"
-    region_name = "us-east-1"
+    # secret_name = "prod/Gretel/ApiKey"
+    # region_name = "us-east-1"
 
     # Create a Secrets Manager client
     session = boto3.session.Session()
