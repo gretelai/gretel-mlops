@@ -19,7 +19,7 @@ def create_pipeline(
     model_display_name,
     model_image_uri,
     project_id,
-    project_number
+    project_number,
     region,
     gretel_secret_id,
     config
