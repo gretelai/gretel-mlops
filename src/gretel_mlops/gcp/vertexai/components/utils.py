@@ -6,6 +6,7 @@ import numpy as np
 import xgboost as xgb
 
 from google.cloud import secretmanager
+from google.api_core.exceptions import GoogleAPICallError
 from imblearn.over_sampling import RandomOverSampler
 from gretel_client.projects.models import Model
 from sklearn.metrics import (
@@ -13,47 +14,20 @@ from sklearn.metrics import (
         mean_squared_error, mean_absolute_error, r2_score
     )
 
-
-def get_gretel_api_key(secret_id, secret_version):
+def get_gretel_api_key(secret_id, project_number):
 
     # Initialize the client
     client = secretmanager.SecretManagerServiceClient()
-
-    # Build the resource name
-    # secret_id = "GretelApiKey"
-
-    # Access the secret version.
-    # secret_version = f'projects/{project_number}/secrets/{secret_id}/versions/latest'
-    response = client.access_secret_version(request={"name": secret_version})
-    gretel_api_key = response.payload.data.decode("UTF-8")
-
-    return gretel_api_key
-
-def get_secret(secret_name, region):
-
-    # secret_name = "prod/Gretel/ApiKey"
-    # region_name = "us-east-1"
-
-    # Create a Secrets Manager client
-    session = boto3.session.Session()
-    client = session.client(
-        service_name='secretsmanager',
-        region_name=region_name
-    )
+    secret_version = f'projects/{project_number}/secrets/{secret_id}/versions/latest'
 
     try:
-        get_secret_value_response = client.get_secret_value(
-            SecretId=secret_name
-        )
-    except ClientError as e:
-        # For a list of exceptions thrown, see
-        # https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
-        raise e
+        response = client.access_secret_version(request={"name": secret_version})
+        gretel_api_key = response.payload.data.decode("UTF-8")
+        return gretel_api_key
 
-    # Decrypts secret using the associated KMS key.
-    secret = json.loads(get_secret_value_response['SecretString'])
-
-    return secret["gretelApiKey"]
+    except GoogleAPICallError as e:
+        print(f"An error occurred accessing the secret: {e}")
+        return None
 
 def naive_upsample(df, target_column, target_balance=1.0):
 
