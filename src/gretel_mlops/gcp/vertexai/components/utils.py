@@ -3,10 +3,10 @@ import subprocess
 
 subprocess.check_call([
     sys.executable,
-    "-m", "pip", "install",
-    "gretel-client[aws]",
+    "-m", "pip", "install", "--upgrade",
     "imblearn",
     "optuna",
+    "numpy",
     "xgboost"
 ])
 
