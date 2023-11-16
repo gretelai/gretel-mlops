@@ -31,7 +31,7 @@ warnings.filterwarnings('ignore')
 
 def get_secret(secret_name, region):
 
-"prod/Gretel/ApiKey"
+    # secret_name = "prod/Gretel/ApiKey"
     # region_name = "us-east-1"
 
     # Create a Secrets Manager client

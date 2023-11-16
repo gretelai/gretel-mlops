@@ -1,3 +1,15 @@
+import sys
+import subprocess
+
+subprocess.check_call([
+    sys.executable,
+    "-m", "pip", "install",
+    "gretel-client[aws]",
+    "imblearn",
+    "optuna",
+    "xgboost"
+])
+
 import json
 import optuna
 import pandas as pd
