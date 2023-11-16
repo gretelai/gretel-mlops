@@ -28,15 +28,6 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 logger.addHandler(logging.StreamHandler())
 
-from pdb import set_trace as bp
-
-
-def merge_two_dicts(x, y):
-    """Merges two dicts, returning a new copy."""
-    z = x.copy()
-    z.update(y)
-    return z
-
 
 def read_data(path, base_dir):
     bucket = path.split("/")[2]
@@ -54,7 +45,6 @@ def read_data(path, base_dir):
     return df
     
 
-
 if __name__ == "__main__":
     logger.debug("Starting preprocessing.")
     parser = argparse.ArgumentParser()
@@ -67,7 +57,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     base_dir = "/opt/ml/processing"
-    # base_dir = "/home/sagemaker-user/tmp1"
     pathlib.Path(f"{base_dir}/data").mkdir(parents=True, exist_ok=True)
     train_path = args.train_path
     validation_path = args.validation_path
@@ -116,7 +105,6 @@ if __name__ == "__main__":
     
     logger.info("Writing out preprocessing object to %s.", base_dir)
     preprocess_path = f"{base_dir}/preprocess/preprocess.pkl"
-    # preprocess_path = f"tmp/preprocess.pkl"
     with open(preprocess_path, 'wb') as file:
         pickle.dump(preprocess, file)
 

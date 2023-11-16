@@ -321,8 +321,6 @@ def get_pipeline(
     fixed_hyperparameters = {
         "eval_metric": ml_eval_metric,
         "objective": objective,
-        # "rate_drop": "0.3",
-        # "tweedie_variance_power": "1.4"
     }
     xgb_train = Estimator(
         image_uri=image_uri,

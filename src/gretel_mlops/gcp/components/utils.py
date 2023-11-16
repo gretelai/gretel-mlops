@@ -1,37 +1,37 @@
-import sys
-import subprocess
-
-subprocess.check_call([
-    sys.executable,
-    "-m", "pip", "install",
-    "gretel-client[aws]",
-    "imblearn",
-    "optuna",
-    "xgboost"
-])
-
-import json
 import boto3
+import json
 import optuna
-import warnings
-
-import numpy as np
 import pandas as pd
+import numpy as np
 import xgboost as xgb
 
-from botocore.exceptions import ClientError
+from google.cloud import secretmanager
 from imblearn.over_sampling import RandomOverSampler
 from gretel_client.projects.models import Model
 from sklearn.metrics import (
-    roc_auc_score, average_precision_score, precision_recall_curve, confusion_matrix,
-    mean_squared_error, mean_absolute_error, r2_score
-)
+        roc_auc_score, average_precision_score, precision_recall_curve, confusion_matrix,
+        mean_squared_error, mean_absolute_error, r2_score
+    )
 
-warnings.filterwarnings('ignore')
+
+def get_gretel_api_key(secret_id, secret_version):
+
+    # Initialize the client
+    client = secretmanager.SecretManagerServiceClient()
+
+    # Build the resource name
+    # secret_id = "GretelApiKey"
+
+    # Access the secret version.
+    # secret_version = f'projects/{project_number}/secrets/{secret_id}/versions/latest'
+    response = client.access_secret_version(request={"name": secret_version})
+    gretel_api_key = response.payload.data.decode("UTF-8")
+
+    return gretel_api_key
 
 def get_secret(secret_name, region):
 
-"prod/Gretel/ApiKey"
+    # secret_name = "prod/Gretel/ApiKey"
     # region_name = "us-east-1"
 
     # Create a Secrets Manager client
@@ -56,15 +56,17 @@ def get_secret(secret_name, region):
     return secret["gretelApiKey"]
 
 def naive_upsample(df, target_column, target_balance=1.0):
-    
+
     over_sampler = RandomOverSampler(sampling_strategy=target_balance)
     y = df.pop(target_column)
     df_resampled, y_resampled = over_sampler.fit_resample(df, y)
     df_resampled[target_column] = y_resampled
-    
+
     return df_resampled
 
 def compute_optimal_f1(y_test, predictions):
+
+    # Compute the precision-recall curve
 
     precision, recall, thresholds = precision_recall_curve(y_test, predictions)
     selection = ~((precision==0)&(recall==0))
@@ -86,12 +88,12 @@ def compute_optimal_f1(y_test, predictions):
     # Compute the confusion matrix at the optimal threshold
     predictions_binary = (predictions >= best_threshold).astype(int)
     conf_matrix = confusion_matrix(y_test, predictions_binary)
-    
+
     return best_f1_score, optimal_precision, optimal_recall, conf_matrix
 
 
 def generate_classification_report(y_test, predictions):
-    # Calculate classification metrics  
+    # Calculate classification metrics
     f1, precision, recall, conf_matrix = compute_optimal_f1(y_test, predictions)
 
     # Calculate AUC using sklearn's functions
@@ -121,7 +123,7 @@ def generate_classification_report(y_test, predictions):
             }
         },
     }
-    
+
     return report_dict
 
 def generate_regression_report(y_test, predictions):
@@ -158,10 +160,10 @@ def generate_regression_report(y_test, predictions):
             },
         },
     }
-    
+
     return report_dict
 
-def objective(trial, X_train, y_train, X_val, y_val, task, objective, metric):
+def objective_func(trial, X_train, y_train, X_val, y_val, task, objective, metric):
     param = {
         'silent': 0,
         'verbosity': 0,
@@ -171,9 +173,10 @@ def objective(trial, X_train, y_train, X_val, y_val, task, objective, metric):
         'alpha': trial.suggest_float('alpha', 0, 2),
         'max_depth': trial.suggest_int('max_depth', 1, 10),
         'num_round': trial.suggest_int('num_round', 100, 500),
-        'rate_drop': trial.suggest_float('rate_drop', 0.2, 0.4),
-        'tweedie_variance_power': trial.suggest_float('tweedie_variance_power', 1.2, 1.6),
+        'rate_drop': 0.3,
+        'tweedie_variance_power': 1.4
     }
+
     if task == 'regression':
         model = xgb.XGBRegressor(**param)
         model.fit(X_train, y_train)
@@ -196,19 +199,21 @@ class MLMetric:
         self.target_column = target_column
         self.objective = objective
         self.objective_type = objective_type
-        
+
     def __call__(self, model: Model):
 
         X_train = pd.read_csv(model.get_artifact_link("data_preview"), compression="gzip")
         y_train = X_train.pop(self.target_column)
+
+        # preprocess synthetic data
         X_train = pd.DataFrame(self.preprocess.transform(X_train))
-        
-        # update colums of test set to match synthetic data columns
+
         X_val = self.df_test.copy()
         y_val = X_val.pop(self.target_column)
         X_val.columns = X_train.columns
 
         study = optuna.create_study(direction=self.objective_type.lower())
-        study.optimize(lambda trial: objective(trial, X_train, y_train, X_val, y_val, self.task, self.objective, self.metric), n_trials=6, n_jobs=2)
+        study.optimize(lambda trial: objective_func(trial, X_train, y_train, X_val, y_val, self.task, self.objective, self.metric), n_trials=6, n_jobs=2)
 
         return study.best_value
+        
