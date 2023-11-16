@@ -3,7 +3,7 @@
 import google.cloud.aiplatform as aip
 from kfp import compiler, dsl
 from kfp.dsl import component, OutputPath, InputPath
-from utils import (
+from .utils import (
   naive_upsample,
   MLMetric,
   get_gretel_api_key
