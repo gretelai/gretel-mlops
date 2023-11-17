@@ -13,7 +13,7 @@ setup(
     # #     'scikit-learn==1.3.0',
     # #     # 'git+https://github.com/gretelai/gretel-tuner',
     # #     'imblearn',
-    # #     'xgboost',
+        # 'xgboost',
     # #     'optuna'
     # ],
     license="https://gretel.ai/license/source-available-license",
