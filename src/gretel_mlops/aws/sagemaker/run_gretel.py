@@ -58,6 +58,7 @@ if __name__ == "__main__":
     gretel_secret = args.gretel_secret
     region = args.region
     generate_factor = args.generate_factor
+    strategy = args.strategy
     target_balance = args.target_balance
     target_column = args.target_column
     ml_eval_metric = args.ml_eval_metric 
