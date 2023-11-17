@@ -35,7 +35,6 @@ def gretel_component(
     from gretel_mlops.gcp.vertexai.utils import (
       naive_upsample,
       MLMetric,
-      get_gretel_api_key
     )
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
