@@ -6,7 +6,8 @@ from kfp.dsl import component, OutputPath, InputPath
     base_image="python:3.10",
     packages_to_install=[
       'xgboost', 
-      'scikit-learn', 
+      'scikit-learn',
+      'imblearn',
       'optuna', 
       'pandas', 
       "git+https://github.com/gretelai/gretel-mlops",
