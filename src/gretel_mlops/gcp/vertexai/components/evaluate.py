@@ -9,6 +9,7 @@ from kfp.dsl import component, OutputPath, InputPath
       'scikit-learn==1.3.0', 
       'optuna', 
       'pandas', 
+      'gretel-client[gcp]',
       'google-cloud-aiplatform',
       "git+https://github.com/gretelai/gretel-mlops",
     ],
