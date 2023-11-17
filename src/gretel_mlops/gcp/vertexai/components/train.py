@@ -10,6 +10,7 @@ from kfp.dsl import component, OutputPath, InputPath
       'imblearn',
       'optuna', 
       'pandas', 
+      'gretel-client',
       "git+https://github.com/gretelai/gretel-mlops",
       'google-cloud-aiplatform'
       ],
