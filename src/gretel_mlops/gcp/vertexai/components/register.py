@@ -1,7 +1,5 @@
 # Preprocess step
 
-import google.cloud.aiplatform as aip
-from kfp import compiler, dsl
 from kfp.dsl import component, InputPath
 
 @component(

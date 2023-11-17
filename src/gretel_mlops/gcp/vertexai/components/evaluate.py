@@ -1,8 +1,6 @@
 # Evaluate step
 
-import google.cloud.aiplatform as aip
-from kfp import compiler, dsl
-from kfp.dsl import component, Input, Output, Artifact, OutputPath, Model, Dataset, InputPath, Condition
+from kfp.dsl import component, OutputPath, InputPath
 from .utils import (
   generate_regression_report,
   generate_classification_report

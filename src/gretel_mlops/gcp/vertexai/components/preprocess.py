@@ -1,12 +1,10 @@
 # Preprocess step
 
-import google.cloud.aiplatform as aip
-from kfp import compiler, dsl
 from kfp.dsl import component, OutputPath
 
 @component(
     base_image="python:3.10",
-    packages_to_install=['scikit-learn==1.3.0', 'gcsfs', 'pandas', 'google-cloud-aiplatform'],
+    packages_to_install=['scikit-learn', 'gcsfs', 'pandas', 'google-cloud-aiplatform'],
 )
 def preprocess_component(
     config: str,
