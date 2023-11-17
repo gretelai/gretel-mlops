@@ -113,15 +113,15 @@ def gretel_component(
       tuner_config = GretelHyperParameterConfig(
           project=project,
           artifact_id=artifact_id,
-          epoch_choices=[20,], #0, 400, 600, 800, 1200, 1400, 1600],
+          epoch_choices=[200, 400, 600, 800, 1200, 1400, 1600],
           batch_size_choices=[500, 1000, 2000],
           base_config=config,
           metric=optimization_metric,
       )
 
       tuner = GretelHyperParameterTuner(tuner_config)
-      N_TRIALS = 1 #16
-      MAX_JOBS = 1 #4
+      N_TRIALS = 16
+      MAX_JOBS = 4
 
       print(f"Running optuna with {N_TRIALS} trials and {MAX_JOBS}")
       tuner_results = tuner.run(n_trials=N_TRIALS, n_jobs=min(N_TRIALS, MAX_JOBS))
