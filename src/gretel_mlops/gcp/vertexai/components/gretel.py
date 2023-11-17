@@ -34,7 +34,6 @@ def gretel_component(
         GretelHyperParameterTuner
     )
     from gretel_mlops.gcp.vertexai.utils import (
-      naive_upsample,
       MLMetric,
     )
     logger = logging.getLogger()
