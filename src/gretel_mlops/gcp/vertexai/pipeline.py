@@ -19,9 +19,8 @@ def create_pipeline(
     model_display_name,
     model_image_uri,
     project_id,
-    project_number,
     region,
-    gretel_secret_id,
+    gretel_api_key,
     config
 ):
 
@@ -38,7 +37,7 @@ def create_pipeline(
             config=config,
             project_number=project_number,
             input_dir=preprocess_op.output,
-            gretel_secret_id=gretel_secret_id
+            gretel_api_key=gretel_api_key
             )
 
         train_op = train_component(
