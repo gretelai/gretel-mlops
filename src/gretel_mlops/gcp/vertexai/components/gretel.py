@@ -29,6 +29,7 @@ def gretel_component(
     import logging
     import os
     import json
+    import pandas as pd
     from joblib import load
     from gretel_client import Gretel
     from gretel_client.projects.models import read_model_config
