@@ -171,8 +171,8 @@ def objective(trial, X_train, y_train, X_val, y_val, task, objective, metric):
         'alpha': trial.suggest_float('alpha', 0, 2),
         'max_depth': trial.suggest_int('max_depth', 1, 10),
         'num_round': trial.suggest_int('num_round', 100, 500),
-        'rate_drop': trial.suggest_float('rate_drop', 0.2, 0.4),
-        'tweedie_variance_power': trial.suggest_float('tweedie_variance_power', 1.2, 1.6),
+        'rate_drop': 0.3,
+        'tweedie_variance_power': 1.4
     }
     if task == 'regression':
         model = xgb.XGBRegressor(**param)
