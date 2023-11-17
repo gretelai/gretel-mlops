@@ -1,11 +1,17 @@
 # Train step
 
 from kfp.dsl import component, OutputPath, InputPath
-from .utils import objective_func
 
 @component(
     base_image="python:3.10",
-    packages_to_install=['xgboost', 'scikit-learn', 'optuna', 'pandas', 'google-cloud-aiplatform'],
+    packages_to_install=[
+      'xgboost', 
+      'scikit-learn', 
+      'optuna', 
+      'pandas', 
+      "git+https://github.com/gretelai/gretel-mlops",
+      'google-cloud-aiplatform'
+      ],
 )
 def train_component(
     config: str,
@@ -27,6 +33,7 @@ def train_component(
         roc_auc_score, average_precision_score, precision_recall_curve, confusion_matrix,
         mean_squared_error, mean_absolute_error, r2_score
     )
+    from gretel_mlops.gcp.vertexai.components.utils import objective_func
 
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)

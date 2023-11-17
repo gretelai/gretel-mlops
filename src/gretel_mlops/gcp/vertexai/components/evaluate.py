@@ -1,14 +1,17 @@
 # Evaluate step
 
 from kfp.dsl import component, OutputPath, InputPath
-from .utils import (
-  generate_regression_report,
-  generate_classification_report
-)
 
 @component(
     base_image="python:3.10",
-    packages_to_install=['xgboost', 'scikit-learn==1.3.0', 'optuna', 'pandas', 'google-cloud-aiplatform'],
+    packages_to_install=[
+      'xgboost', 
+      'scikit-learn==1.3.0', 
+      'optuna', 
+      'pandas', 
+      'google-cloud-aiplatform',
+      "git+https://github.com/gretelai/gretel-mlops",
+    ],
 )
 def evaluate_component(
     config: str,
@@ -22,6 +25,10 @@ def evaluate_component(
     import numpy as np
     import pandas as pd
     import xgboost as xgb
+    from gretel_mlops.gcp.vertexai.components.utils import (
+      generate_regression_report,
+      generate_classification_report
+    )
 
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)

@@ -1,11 +1,6 @@
 # Gretel step
 
 from kfp.dsl import component, OutputPath, InputPath
-from .utils import (
-  naive_upsample,
-  MLMetric,
-  get_gretel_api_key
-)
         
 @component(
     base_image="python:3.10",
@@ -14,6 +9,7 @@ from .utils import (
         "google-cloud-secret-manager",
         "gretel-client[gcp]",
         "git+https://github.com/gretelai/gretel-tuner",
+        "git+https://github.com/gretelai/gretel-mlops",
         "imblearn",
         "optuna",
         "xgboost",
@@ -37,7 +33,11 @@ def gretel_component(
         GretelHyperParameterConfig,
         GretelHyperParameterTuner
     )
-
+    from gretel_mlops.gcp.vertexai.components.utils import (
+      naive_upsample,
+      MLMetric,
+      get_gretel_api_key
+    )
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
     logger.addHandler(logging.StreamHandler())
