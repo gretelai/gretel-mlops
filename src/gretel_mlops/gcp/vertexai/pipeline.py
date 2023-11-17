@@ -6,10 +6,10 @@ import google.cloud.aiplatform as aip
 from kfp import dsl
 from .components import (
     preprocess_component,
-    # gretel_component,
-    # train_component,
-    # evaluate_component,
-    # register_component
+    gretel_component,
+    train_component,
+    evaluate_component,
+    register_component
 )
 
 ##
