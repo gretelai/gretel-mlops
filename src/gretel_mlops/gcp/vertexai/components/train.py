@@ -6,8 +6,8 @@ from kfp.dsl import component, OutputPath, InputPath
 from .utils import objective_func
 
 @component(
-    base_image="python:3.9",
-    packages_to_install=['xgboost', 'scikit-learn==1.3.0', 'optuna', 'pandas', 'google-cloud-aiplatform'],
+    base_image="python:3.10",
+    packages_to_install=['xgboost', 'scikit-learn', 'optuna', 'pandas', 'google-cloud-aiplatform'],
 )
 def train_component(
     config: str,
