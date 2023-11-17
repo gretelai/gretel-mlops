@@ -18,36 +18,13 @@ import xgboost as xgb
 
 # from google.cloud import secretmanager
 # from google.api_core.exceptions import GoogleAPICallError
-from imblearn.over_sampling import RandomOverSampler
+# from imblearn.over_sampling import RandomOverSampler
 from gretel_client.projects.models import Model
 from sklearn.metrics import (
         roc_auc_score, average_precision_score, precision_recall_curve, confusion_matrix,
         mean_squared_error, mean_absolute_error, r2_score
     )
 
-# def get_gretel_api_key(secret_id, project_number):
-
-#     # Initialize the client
-#     client = secretmanager.SecretManagerServiceClient()
-#     secret_version = f'projects/{project_number}/secrets/{secret_id}/versions/latest'
-
-#     try:
-#         response = client.access_secret_version(request={"name": secret_version})
-#         gretel_api_key = response.payload.data.decode("UTF-8")
-#         return gretel_api_key
-
-#     except GoogleAPICallError as e:
-#         print(f"An error occurred accessing the secret: {e}")
-#         return None
-
-def naive_upsample(df, target_column, target_balance=1.0):
-
-    over_sampler = RandomOverSampler(sampling_strategy=target_balance)
-    y = df.pop(target_column)
-    df_resampled, y_resampled = over_sampler.fit_resample(df, y)
-    df_resampled[target_column] = y_resampled
-
-    return df_resampled
 
 def compute_optimal_f1(y_test, predictions):
 

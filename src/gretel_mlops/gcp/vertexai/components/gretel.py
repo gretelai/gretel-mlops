@@ -26,6 +26,7 @@ def gretel_component(
     import json
     import pandas as pd
     from joblib import load
+    from imblearn.over_sampling import RandomOverSampler
     from gretel_client import Gretel
     from gretel_client.projects.models import read_model_config
     from gretel_tuner import (
@@ -40,6 +41,15 @@ def gretel_component(
     logger.setLevel(logging.INFO)
     logger.addHandler(logging.StreamHandler())
 
+    def naive_upsample(df, target_column, target_balance=1.0):
+
+        over_sampler = RandomOverSampler(sampling_strategy=target_balance)
+        y = df.pop(target_column)
+        df_resampled, y_resampled = over_sampler.fit_resample(df, y)
+        df_resampled[target_column] = y_resampled
+
+        return df_resampled
+    
     # Ensure the output directory exists
     os.makedirs(output_dir, exist_ok=True)
 
