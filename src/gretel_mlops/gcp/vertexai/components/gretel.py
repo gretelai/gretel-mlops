@@ -21,7 +21,6 @@ from .utils import (
 )
 def gretel_component(
     config: str,
-    gretel_api_key: str,
     project_number: str,
     gretel_secret_id: str,
     input_dir: InputPath(),
