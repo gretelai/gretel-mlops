@@ -1,14 +1,14 @@
-import sys
-import subprocess
+# import sys
+# import subprocess
 
-subprocess.check_call([
-    sys.executable,
-    "-m", "pip", "install", "--upgrade",
-    "imblearn",
-    "optuna",
-    "numpy",
-    "xgboost"
-])
+# subprocess.check_call([
+#     sys.executable,
+#     "-m", "pip", "install", "--upgrade",
+#     "imblearn",
+#     "optuna",
+#     "numpy",
+#     "xgboost"
+# ])
 
 import json
 import optuna

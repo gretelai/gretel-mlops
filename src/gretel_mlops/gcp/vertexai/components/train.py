@@ -3,7 +3,7 @@
 import google.cloud.aiplatform as aip
 from kfp import compiler, dsl
 from kfp.dsl import component, OutputPath, InputPath
-from utils import objective_func
+from .utils import objective_func
 
 @component(
     base_image="python:3.9",
