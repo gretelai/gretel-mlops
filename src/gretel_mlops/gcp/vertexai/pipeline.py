@@ -35,7 +35,6 @@ def create_pipeline(
     
         gretel_op = gretel_component(
             config=config,
-            project_number=project_number,
             input_dir=preprocess_op.output,
             gretel_api_key=gretel_api_key
             )
