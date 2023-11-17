@@ -33,7 +33,7 @@ def gretel_component(
         GretelHyperParameterConfig,
         GretelHyperParameterTuner
     )
-    from gretel_mlops.gcp.vertexai.components.utils import (
+    from gretel_mlops.gcp.vertexai.utils import (
       naive_upsample,
       MLMetric,
       get_gretel_api_key

@@ -33,7 +33,7 @@ def train_component(
         roc_auc_score, average_precision_score, precision_recall_curve, confusion_matrix,
         mean_squared_error, mean_absolute_error, r2_score
     )
-    from gretel_mlops.gcp.vertexai.components.utils import objective_func
+    from gretel_mlops.gcp.vertexai.utils import objective_func
 
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)

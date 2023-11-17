@@ -25,7 +25,7 @@ def evaluate_component(
     import numpy as np
     import pandas as pd
     import xgboost as xgb
-    from gretel_mlops.gcp.vertexai.components.utils import (
+    from gretel_mlops.gcp.vertexai.utils import (
       generate_regression_report,
       generate_classification_report
     )
