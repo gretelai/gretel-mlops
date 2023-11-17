@@ -48,7 +48,7 @@ def gretel_component(
         df_resampled[target_column] = y_resampled
 
         return df_resampled
-    
+
     # Ensure the output directory exists
     os.makedirs(output_dir, exist_ok=True)
 
@@ -122,7 +122,7 @@ def gretel_component(
       tuner_config = GretelHyperParameterConfig(
           project=project,
           artifact_id=artifact_id,
-          epoch_choices=[200, 400, 600, 800, 1200, 1400, 1600],
+          epoch_choices=[20],#0, 400, 600, 800, 1200, 1400, 1600],
           batch_size_choices=[500, 1000, 2000],
           base_config=config,
           metric=optimization_metric,
