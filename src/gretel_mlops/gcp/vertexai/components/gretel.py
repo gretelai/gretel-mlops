@@ -17,8 +17,7 @@ from kfp.dsl import component, OutputPath, InputPath
 )
 def gretel_component(
     config: str,
-    project_number: str,
-    gretel_secret_id: str,
+    gretel_api_key: str,
     input_dir: InputPath(),
     output_dir: OutputPath()
 ):
@@ -81,12 +80,11 @@ def gretel_component(
     else:
 
       logger.info(f"Configuring a {mode} Gretel session.")
-      GRETEL_API_KEY = get_gretel_api_key(gretel_secret_id, project_number)
 
       GRETEL_PROJECT_NAME = 'vertex-pipelines-gretel-hyptuning'
       gretel = Gretel(
         project_name=GRETEL_PROJECT_NAME,
-        api_key=GRETEL_API_KEY,
+        api_key=gretel_api_key,
         validate=True,
         clear=True,
         default_runner=mode,
