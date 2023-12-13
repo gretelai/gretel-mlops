@@ -12,7 +12,8 @@ import sys
 import argparse
 import logging
 import pathlib
-import pickle
+# import pickle
+import joblib
 import json
 import boto3
 import os
@@ -83,9 +84,10 @@ if __name__ == "__main__":
 
     logger.info("Loading preprocessing model.")
     preprocess_path = "/opt/ml/processing/preprocess/preprocess.pkl"
-    with open(preprocess_path, "rb") as file:
-        preprocess = pickle.load(file)
+    # with open(preprocess_path, "rb") as file:
+    #     preprocess = pickle.load(file)
     # preprocess = pickle.load(open(preprocess_path, "rb"))
+    preprocess = joblib.load(file)
     
     if strategy == None:
         logger.info("No Gretel required. Using source data.")

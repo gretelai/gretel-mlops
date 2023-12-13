@@ -10,7 +10,8 @@ import logging
 import json
 import os
 import pathlib
-import pickle
+# import pickle
+import joblib
 import requests
 import tempfile
 
@@ -105,9 +106,10 @@ if __name__ == "__main__":
     
     logger.info("Writing out preprocessing object to %s.", base_dir)
     preprocess_path = f"{base_dir}/preprocess/preprocess.pkl"
-    with open(preprocess_path, 'wb') as file:
-        pickle.dump(preprocess, file)
-
+    # with open(preprocess_path, 'wb') as file:
+    #     pickle.dump(preprocess, file)
+    joblib.dump(preprocess, file)
+    
     logger.info("Splitting %d rows of data into train, validation, test datasets.", len(X_train))
     
     if test_path:

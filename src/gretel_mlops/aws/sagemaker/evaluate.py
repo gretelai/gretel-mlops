@@ -12,7 +12,6 @@ import argparse
 import json
 import logging
 import pathlib
-import pickle
 import tarfile
 
 import numpy as np
