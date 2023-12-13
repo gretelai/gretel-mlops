@@ -1,9 +1,9 @@
 import sys
-import subprocess
+# import subprocess
 
-subprocess.check_call([
-    sys.executable, "-m", "pip", "install", "scikit-learn==1.3.0",
-])
+# subprocess.check_call([
+#     sys.executable, "-m", "pip", "install", "scikit-learn==1.3.0",
+# ])
 
 import argparse
 import logging

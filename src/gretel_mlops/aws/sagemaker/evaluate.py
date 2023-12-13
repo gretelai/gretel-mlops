@@ -19,7 +19,7 @@ import numpy as np
 import pandas as pd
 import xgboost
 
-from utils import generate_regression_report, generate_classification_report
+from utils import generate_regression_report, generate_classification_report, is_safe_path
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -36,8 +36,15 @@ if __name__ == "__main__":
     ml_task = args.ml_task
     target_column = args.target_column
     model_path = "/opt/ml/processing/model/model.tar.gz"
+    # with tarfile.open(model_path) as tar:
+        # tar.extractall(path=".")
+
     with tarfile.open(model_path) as tar:
-        tar.extractall(path=".")
+        # Validate members
+        safe_members = [m for m in tar.getmembers() if is_safe_path(m.name, m.path)]
+        
+        # Extract only safe members
+        tar.extractall(path=".", members=safe_members)
 
     logger.debug("Loading xgboost model.")
     model = xgboost.Booster()

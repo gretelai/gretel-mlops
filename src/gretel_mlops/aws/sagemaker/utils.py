@@ -13,6 +13,7 @@ subprocess.check_call([
 import json
 import boto3
 import optuna
+import os
 import warnings
 
 import numpy as np
@@ -30,9 +31,6 @@ from sklearn.metrics import (
 warnings.filterwarnings('ignore')
 
 def get_secret(secret_name, region):
-
-    # secret_name = "prod/Gretel/ApiKey"
-    # region_name = "us-east-1"
 
     # Create a Secrets Manager client
     session = boto3.session.Session()
@@ -54,6 +52,10 @@ def get_secret(secret_name, region):
     secret = json.loads(get_secret_value_response['SecretString'])
 
     return secret["gretelApiKey"]
+
+def is_safe_path(basename, path):
+    # Check for potentially dangerous relative paths
+    return not (path.startswith(("..", "/")) or os.path.isabs(path) or ".." in path)
 
 def naive_upsample(df, target_column, target_balance=1.0):
     
