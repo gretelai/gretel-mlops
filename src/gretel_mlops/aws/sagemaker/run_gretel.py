@@ -87,7 +87,7 @@ if __name__ == "__main__":
     # with open(preprocess_path, "rb") as file:
     #     preprocess = pickle.load(file)
     # preprocess = pickle.load(open(preprocess_path, "rb"))
-    preprocess = joblib.load(file)
+    preprocess = joblib.load(preprocess_path)
     
     if strategy == None:
         logger.info("No Gretel required. Using source data.")

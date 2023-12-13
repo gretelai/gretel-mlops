@@ -27,7 +27,6 @@ from sagemaker.processing import (
     FrameworkProcessor,
 )
 from sagemaker.pytorch import PyTorch
-from sagemaker.sklearn.processing import SKLearnProcessor
 from sagemaker.tuner import (
     IntegerParameter,
     CategoricalParameter,
@@ -58,8 +57,6 @@ from sagemaker.workflow.steps import (
 from sagemaker.workflow.model_step import ModelStep
 from sagemaker.model import Model
 from sagemaker.workflow.pipeline_context import PipelineSession
-
-from pdb import set_trace as bp
 
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 
@@ -388,7 +385,6 @@ def get_pipeline(
     step_args = script_eval.run(
         inputs=[
             ProcessingInput(
-                # source=step_train.properties.ModelArtifacts.S3ModelArtifacts,
                 source=step_train.get_top_model_s3_uri(top_k=0,s3_bucket=sagemaker_session.default_bucket(),prefix=f"{base_job_prefix}/ModelTrain"),
                 destination="/opt/ml/processing/model",
             ),
@@ -402,7 +398,6 @@ def get_pipeline(
         outputs=[
             ProcessingOutput(output_name="evaluation", source="/opt/ml/processing/evaluation"),
         ],
-        # code=os.path.join(BASE_DIR, "evaluate.py"),
         code="evaluate.py",
         source_dir=BASE_DIR,
         arguments=[
