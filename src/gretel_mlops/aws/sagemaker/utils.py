@@ -1,14 +1,14 @@
 import sys
-import subprocess
+# import subprocess
 
-subprocess.check_call([
-    sys.executable,
-    "-m", "pip", "install",
-    "gretel-client[aws]",
-    "imblearn",
-    "optuna",
-    "xgboost"
-])
+# subprocess.check_call([
+#     sys.executable,
+#     "-m", "pip", "install",
+#     "gretel-client[aws]",
+#     "imblearn",
+#     "optuna",
+#     "xgboost"
+# ])
 
 import json
 import boto3
