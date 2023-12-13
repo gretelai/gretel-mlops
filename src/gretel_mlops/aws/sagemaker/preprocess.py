@@ -108,7 +108,7 @@ if __name__ == "__main__":
     preprocess_path = f"{base_dir}/preprocess/preprocess.pkl"
     # with open(preprocess_path, 'wb') as file:
     #     pickle.dump(preprocess, file)
-    joblib.dump(preprocess, file)
+    joblib.dump(preprocess, preprocess_path)
     
     logger.info("Splitting %d rows of data into train, validation, test datasets.", len(X_train))
     
