@@ -2,6 +2,7 @@ import json
 import boto3
 import optuna
 import os
+import tarfile
 import warnings
 
 import numpy as np
@@ -44,11 +45,24 @@ def get_secret(secret_name, region):
     return secret["gretelApiKey"]
 
 
-def is_safe_path(basename, path):
-    # Check for potentially dangerous relative paths
-    return not (
-        path.startswith(("..", "/")) or os.path.isabs(path) or ".." in path
-    )
+def is_member_safe(member, target_directory):
+    # Fully resolve the paths to avoid path traversal vulnerabilities
+    target_directory = os.path.abspath(target_directory)
+    member_path = os.path.abspath(os.path.join(target_directory, member.name))
+
+    # Check if the member path starts with the target directory
+    return member_path.startswith(target_directory)
+
+
+def extract_tar_safely(tar_path, target_directory="."):
+    with tarfile.open(tar_path, "r") as tar:
+        # Filter out safe members using list comprehension
+        safe_members = [
+            m for m in tar.getmembers() if is_member_safe(m, target_directory)
+        ]
+
+        # Extract only safe members
+        tar.extractall(path=target_directory, members=safe_members)
 
 
 def naive_upsample(df, target_column, target_balance=1.0):

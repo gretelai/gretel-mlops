@@ -3,12 +3,15 @@ import argparse
 import json
 import logging
 import pathlib
-import tarfile
 
 import pandas as pd
 import xgboost
 
-from utils import generate_regression_report, generate_classification_report
+from utils import (
+    generate_regression_report,
+    generate_classification_report,
+    extract_tar_safely,
+)
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -25,8 +28,7 @@ if __name__ == "__main__":
     ml_task = args.ml_task
     target_column = args.target_column
     model_path = "/opt/ml/processing/model/model.tar.gz"
-    with tarfile.open(model_path) as tar:
-        tar.extractall(path=".")
+    extract_tar_safely(model_path)
 
     logger.debug("Loading xgboost model.")
     model = xgboost.Booster()
