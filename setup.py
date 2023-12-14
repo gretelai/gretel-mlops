@@ -7,7 +7,6 @@ setup(
     packages=find_packages("src"),
     package_dir={"": "src"},
     license="https://gretel.ai/license/source-available-license",
-    # Include package data
     include_package_data=True,
     package_data={
         "gretel_mlops.aws.sagemaker": ["requirements.txt"],
