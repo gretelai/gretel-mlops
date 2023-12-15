@@ -12,6 +12,7 @@ import xgboost as xgb
 from botocore.exceptions import ClientError
 from imblearn.over_sampling import RandomOverSampler
 from gretel_client.projects.models import Model
+from gretel_client.tuner import BaseTunerMetric, MetricDirection
 from sklearn.metrics import (
     roc_auc_score,
     average_precision_score,
@@ -190,7 +191,7 @@ def objective(trial, X_train, y_train, X_val, y_val, task, objective, metric):
     return score[metric]["value"]
 
 
-class MLMetric:
+class MLMetric(BaseTunerMetric):
     def __init__(
         self,
         df_test,
@@ -208,6 +209,7 @@ class MLMetric:
         self.target_column = target_column
         self.objective = objective
         self.objective_type = objective_type
+        self.direction = objective_type
 
     def __call__(self, model: Model):
         X_train = pd.read_csv(
