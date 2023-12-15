@@ -59,14 +59,14 @@ BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 
 
 def get_sagemaker_client(region):
-    """Gets the sagemaker client.
+    """
+    Creates and returns a SageMaker client for a specific AWS region.
 
     Args:
-        region: the aws region to start the session
-        default_bucket: the bucket to use for storing the artifacts
+        region (str): AWS region to start the session.
 
     Returns:
-        `sagemaker.session.Session instance
+        boto3.client: A SageMaker client instance.
     """
     boto_session = boto3.Session(region_name=region)
     sagemaker_client = boto_session.client("sagemaker")
@@ -74,16 +74,16 @@ def get_sagemaker_client(region):
 
 
 def get_session(region, default_bucket):
-    """Gets the sagemaker session based on the region.
+    """
+    Creates and returns a SageMaker session.
 
     Args:
-        region: the aws region to start the session
-        default_bucket: the bucket to use for storing the artifacts
+        region (str): AWS region to start the session.
+        default_bucket (str): Name of the S3 bucket for storing artifacts.
 
     Returns:
-        `sagemaker.session.Session instance
+        sagemaker.session.Session: A SageMaker session instance.
     """
-
     boto_session = boto3.Session(region_name=region)
 
     sagemaker_client = boto_session.client("sagemaker")
@@ -97,14 +97,15 @@ def get_session(region, default_bucket):
 
 
 def get_pipeline_session(region, default_bucket):
-    """Gets the pipeline session based on the region.
+    """
+    Creates and returns a SageMaker Pipeline session.
 
     Args:
-        region: the aws region to start the session
-        default_bucket: the bucket to use for storing the artifacts
+        region (str): AWS region to start the session.
+        default_bucket (str): Name of the S3 bucket for storing artifacts.
 
     Returns:
-        PipelineSession instance
+        PipelineSession: A SageMaker PipelineSession instance.
     """
 
     boto_session = boto3.Session(region_name=region)
@@ -115,22 +116,6 @@ def get_pipeline_session(region, default_bucket):
         sagemaker_client=sagemaker_client,
         default_bucket=default_bucket,
     )
-
-
-def get_pipeline_custom_tags(new_tags, region, sagemaker_project_name=None):
-    try:
-        sm_client = get_sagemaker_client(region)
-        response = sm_client.describe_project(
-            ProjectName=sagemaker_project_name
-        )
-        sagemaker_project_arn = response["ProjectArn"]
-        response = sm_client.list_tags(ResourceArn=sagemaker_project_arn)
-        project_tags = response["Tags"]
-        for project_tag in project_tags:
-            new_tags.append(project_tag)
-    except Exception as e:
-        print(f"Error getting project tags: {e}")
-    return new_tags
 
 
 def get_pipeline(
@@ -146,23 +131,39 @@ def get_pipeline(
     gretel_secret=None,
     config=None,
 ):
-    """Gets a SageMaker ML Pipeline instance working with on a tabular dataset.
+    """
+    Constructs and returns a SageMaker ML Pipeline for tabular data processing.
+
+    This pipeline includes steps for data preprocessing, synthetic data generation,
+    model training, evaluation, and conditional model registration based on evaluation results.
 
     Args:
-        region: AWS region to create and run the pipeline.
-        role: IAM role to create and run steps and pipeline.
-        default_bucket: the bucket to use for storing the artifacts
+        region (str): AWS region where the pipeline will be created.
+        sagemaker_project_name (str, optional): Name of the SageMaker project.
+        role (str, optional): IAM role for pipeline execution.
+        default_bucket (str, optional): S3 bucket for storing artifacts.
+        model_package_group_name (str, optional): Name for the model package group.
+        pipeline_name (str, optional): Name of the pipeline.
+        base_job_prefix (str, optional): Prefix for naming SageMaker jobs.
+        processing_instance_type (str, optional): EC2 instance type for processing jobs.
+        training_instance_type (str, optional): EC2 instance type for training jobs.
+        gretel_secret (str, optional): Secret key for Gretel API.
+        config (dict, optional): Configuration parameters for the pipeline.
 
     Returns:
-        an instance of a pipeline
+        Pipeline: A SageMaker ML Pipeline instance.
     """
+
+    # Create a SageMaker session for pipeline operations
     sagemaker_session = get_session(region, default_bucket)
+    # If no role is provided, use the default execution role
     if role is None:
         role = sagemaker.session.get_execution_role(sagemaker_session)
 
+    # Create a Pipeline session for executing the pipeline steps
     pipeline_session = get_pipeline_session(region, default_bucket)
 
-    # parameters for pipeline execution
+    # Define pipeline parameters for execution
     processing_instance_count = ParameterInteger(
         name="ProcessingInstanceCount", default_value=1
     )
@@ -175,7 +176,7 @@ def get_pipeline(
         default_value=dataset,
     )
 
-    # config parameters
+    # Config parameters
     train_path = config["dataset"]["train_path"]
     validation_path = config["dataset"]["validation_path"]
     test_path = config["dataset"]["test_path"]
@@ -193,6 +194,7 @@ def get_pipeline(
     mode = config["gretel"]["mode"]
     sink_bucket = config["gretel"]["sink_bucket"]
 
+    # Configure arguments for the preprocessing step
     arguments = [
         "--train-path",
         train_path,
@@ -217,7 +219,7 @@ def get_pipeline(
             drop_columns,
         ]
 
-    # processing step for feature engineering
+    # Define the preprocessing step using a FrameworkProcessor
     script_preprocess = FrameworkProcessor(
         command=["python3"],
         instance_type=processing_instance_type,
@@ -259,7 +261,7 @@ def get_pipeline(
         step_args=step_args,
     )
 
-    # gretel step for synthetic data generation
+    # Define the Gretel step for synthetic data generation
     script_gretel = FrameworkProcessor(
         command=["python3"],
         instance_type=processing_instance_type,
@@ -344,7 +346,7 @@ def get_pipeline(
         step_args=step_args,
     )
 
-    # training step for generating model artifacts
+    # Define the model training step
     model_path = (
         f"s3://{sagemaker_session.default_bucket()}/"
         f"{base_job_prefix}/ModelTrain"
@@ -410,7 +412,7 @@ def get_pipeline(
         step_args=step_args,
     )
 
-    # processing step for evaluation
+    # Define the model evaluation step
     script_eval = FrameworkProcessor(
         command=["python3"],
         instance_type=processing_instance_type,
@@ -460,7 +462,7 @@ def get_pipeline(
         property_files=[evaluation_report],
     )
 
-    # register model step that will be conditionally executed
+    # Define the model registration step
     model_metrics = ModelMetrics(
         model_statistics=MetricsSource(
             s3_uri="{}/evaluation.json".format(
@@ -495,7 +497,7 @@ def get_pipeline(
         step_args=step_args,
     )
 
-    # condition step for evaluating model quality and branching execution
+    # Define the condition step for evaluating model quality
     left_condition = JsonGet(
         step_name=step_eval.name,
         property_file=evaluation_report,
@@ -519,7 +521,7 @@ def get_pipeline(
         else_steps=[],
     )
 
-    # pipeline instance
+    # Initialize and return the pipeline instance
     pipeline = Pipeline(
         name=pipeline_name,
         parameters=[

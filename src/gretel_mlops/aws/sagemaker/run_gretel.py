@@ -1,4 +1,5 @@
 """Script to run Gretel synthetics on source data."""
+
 import argparse
 import logging
 import pathlib
@@ -18,7 +19,9 @@ logger.setLevel(logging.INFO)
 logger.addHandler(logging.StreamHandler())
 
 if __name__ == "__main__":
+    # Setup argparse for command line arguments
     parser = argparse.ArgumentParser()
+    # Define the command line arguments
     parser.add_argument("--gretel-secret", required=True)
     parser.add_argument("--region", required=True)
     parser.add_argument("--target-column", type=str, required=True)
@@ -33,6 +36,7 @@ if __name__ == "__main__":
     parser.add_argument("--sink-bucket", type=str, default=None)
     args = parser.parse_args()
 
+    # Extract arguments
     gretel_secret = args.gretel_secret
     region = args.region
     generate_factor = args.generate_factor
@@ -47,23 +51,28 @@ if __name__ == "__main__":
     sink_bucket = args.sink_bucket
 
     logger.info("Reading train data.")
+    # Define the path to the source training data and read it
     source_path = "/opt/ml/processing/train_source/train.csv"
     data_source = pd.read_csv(source_path)
 
     logger.info("Reading validation data.")
+    # Define the path to the validation data and read it
     validation_path = "/opt/ml/processing/validation/validation.csv"
     data_validation = pd.read_csv(validation_path)
 
+    # Define directories for Gretel output and transformed data
     gretel_dir = "/opt/ml/processing/gretel"
     output_dir = "/opt/ml/processing/train"
     pathlib.Path(gretel_dir).mkdir(parents=True, exist_ok=True)
     pathlib.Path(output_dir).mkdir(parents=True, exist_ok=True)
 
     logger.info("Loading preprocessing model.")
+    # Load the preprocessing model saved earlier
     preprocess_path = "/opt/ml/processing/preprocess/preprocess.pkl"
     preprocess = joblib.load(preprocess_path)
 
     if strategy is None:
+        # If no strategy is provided, use the source data directly
         logger.info("No Gretel required. Using source data.")
         logger.info("Apply preprocessing transformations.")
         y_train = data_source.pop(target_column)
@@ -75,6 +84,7 @@ if __name__ == "__main__":
         train.to_csv(train_data_path, header=False, index=False)
 
     else:
+        # Configure a Gretel session for synthetic data generation
         logger.info(f"Configuring a {mode} Gretel session.")
         GRETEL_API_KEY = get_secret(gretel_secret, region)
 
@@ -91,21 +101,12 @@ if __name__ == "__main__":
         )
 
         if strategy == "balance":
+            # Balance the dataset based on the target column
             data_source = naive_upsample(
                 data_source,
                 target_column=target_column,
                 target_balance=target_balance,
             )
-
-        # project = gretel.get_project()
-        # artifact_id = project.upload_artifact(data_source)
-
-        # config = read_model_config("synthetics/tabular-actgan")
-        # config["models"][0]["actgan"]["privacy_filters"]["outliers"] = None
-        # config["models"][0]["actgan"]["privacy_filters"]["similarity"] = None
-        # config["models"][0]["actgan"]["generate"]["num_records"] = min(
-        #     25_000, len(data_source)
-        # )
 
         optimization_metric = MLMetric(
             data_validation,
@@ -116,37 +117,6 @@ if __name__ == "__main__":
             objective=objective,
             objective_type=objective_type,
         )
-        # tuner_config = GretelHyperParameterConfig(
-        #     project=project,
-        #     artifact_id=artifact_id,
-        #     epoch_choices=[200, 400, 600, 800, 1200, 1400, 1600],
-        #     batch_size_choices=[500, 1000, 2000],
-        #     base_config=config,
-        #     metric=optimization_metric,
-        # )
-
-        # tuner = GretelHyperParameterTuner(tuner_config)
-        N_TRIALS = 16
-        MAX_JOBS = 4
-
-        # print(f"Running optuna with {N_TRIALS} trials and {MAX_JOBS}")
-        # tuner_results = tuner.run(
-        #     n_trials=N_TRIALS, n_jobs=min(N_TRIALS, MAX_JOBS)
-        # )
-        # best_config = tuner_results.best_config
-        # print(best_config)
-        # best_config_path = f"{gretel_dir}/best_config.json"
-        # with open(best_config_path, "w") as f:
-        #     f.write(json.dumps(best_config, indent=4))
-
-        # logger.info("Starting Gretel training step.")
-        # gretel = Gretel(api_key=GRETEL_API_KEY, validate=True)
-        # trained = gretel.submit_train(
-        #     base_config="tabular-actgan",
-        #     data_source=data_source,
-        #     params=best_config["models"][0]["actgan"]["params"],
-        #     privacy_filters={"similarity": None, "outliers": None},
-        # )
 
         tuner_config = """
             base_config: tabular-actgan
@@ -181,6 +151,9 @@ if __name__ == "__main__":
             ]["generator_dim"]
             return model_section
 
+        # Running Gretel tuner with the defined configuration
+        N_TRIALS = 16
+        MAX_JOBS = 4
         tuner_results = gretel.run_tuner(
             tuner_config,
             data_source=data_source,
@@ -190,12 +163,13 @@ if __name__ == "__main__":
             sampler_callback=sampler_callback,
         )
 
-        # retrieve best model
+        # Fetching the best model from Gretel tuner results
         best_model = gretel.fetch_train_job_results(
             tuner_results.best_model_id
         )
 
-        logger.info("Writing out Gretel sqs report.")
+        # Writing out Gretel quality scores and report
+        logger.info("Writing out Gretel quality scores and report.")
         report_summary_path = f"{gretel_dir}/report_quality_scores.txt"
         report_full_path = f"{gretel_dir}/report_full.json"
         report_synth_data_path = f"{gretel_dir}/report_synth_data.csv"
@@ -209,15 +183,15 @@ if __name__ == "__main__":
         )
 
         logger.info("Starting Gretel generation step.")
+        # Calculate the number of records to generate based on generate_factor
         RECORDS_TO_GENERATE = int(len(data_source) * generate_factor)
-        # generated = gretel.submit_generate(
-        #     trained.model_id, num_records=RECORDS_TO_GENERATE
-        # )
+        # Submit a job to generate synthetic data using the best model
         generated = gretel.submit_generate(
             best_model.model_id, num_records=RECORDS_TO_GENERATE
         )
 
-        logger.info("Augment training data with synthetic data .")
+        logger.info("Augment training data with synthetic data.")
+        # Depending on the strategy, replace or augment training data with synthetic data
         if strategy == "replace":
             df_train_synth = generated.synthetic_data
         else:
@@ -228,6 +202,7 @@ if __name__ == "__main__":
             )
 
         logger.info("Apply preprocessing transformations.")
+        # Apply preprocessing transformations to the synthetic data
         y_train_synth = df_train_synth.pop(target_column)
         train_synth_pre = pd.DataFrame(preprocess.transform(df_train_synth))
         train_synth = pd.concat(
@@ -235,5 +210,6 @@ if __name__ == "__main__":
         )
 
         logger.info("Write out training data augmented with synthetic data.")
+        # Write out the augmented training data to a CSV file
         train_synth_data_path = f"{output_dir}/train.csv"
         train_synth.to_csv(train_synth_data_path, header=False, index=False)
