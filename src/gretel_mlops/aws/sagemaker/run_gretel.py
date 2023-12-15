@@ -9,8 +9,6 @@ import warnings
 import pandas as pd
 
 from gretel_client import Gretel
-from gretel_client.projects.models import read_model_config
-from gretel_tuner import GretelHyperParameterConfig, GretelHyperParameterTuner
 from utils import MLMetric, get_secret, naive_upsample
 
 warnings.filterwarnings("ignore")
@@ -99,15 +97,15 @@ if __name__ == "__main__":
                 target_balance=target_balance,
             )
 
-        project = gretel.get_project()
-        artifact_id = project.upload_artifact(data_source)
+        # project = gretel.get_project()
+        # artifact_id = project.upload_artifact(data_source)
 
-        config = read_model_config("synthetics/tabular-actgan")
-        config["models"][0]["actgan"]["privacy_filters"]["outliers"] = None
-        config["models"][0]["actgan"]["privacy_filters"]["similarity"] = None
-        config["models"][0]["actgan"]["generate"]["num_records"] = min(
-            25_000, len(data_source)
-        )
+        # config = read_model_config("synthetics/tabular-actgan")
+        # config["models"][0]["actgan"]["privacy_filters"]["outliers"] = None
+        # config["models"][0]["actgan"]["privacy_filters"]["similarity"] = None
+        # config["models"][0]["actgan"]["generate"]["num_records"] = min(
+        #     25_000, len(data_source)
+        # )
 
         optimization_metric = MLMetric(
             data_validation,
@@ -118,36 +116,83 @@ if __name__ == "__main__":
             objective=objective,
             objective_type=objective_type,
         )
-        tuner_config = GretelHyperParameterConfig(
-            project=project,
-            artifact_id=artifact_id,
-            epoch_choices=[200, 400, 600, 800, 1200, 1400, 1600],
-            batch_size_choices=[500, 1000, 2000],
-            base_config=config,
-            metric=optimization_metric,
-        )
+        # tuner_config = GretelHyperParameterConfig(
+        #     project=project,
+        #     artifact_id=artifact_id,
+        #     epoch_choices=[200, 400, 600, 800, 1200, 1400, 1600],
+        #     batch_size_choices=[500, 1000, 2000],
+        #     base_config=config,
+        #     metric=optimization_metric,
+        # )
 
-        tuner = GretelHyperParameterTuner(tuner_config)
+        # tuner = GretelHyperParameterTuner(tuner_config)
         N_TRIALS = 16
         MAX_JOBS = 4
 
-        print(f"Running optuna with {N_TRIALS} trials and {MAX_JOBS}")
-        tuner_results = tuner.run(
-            n_trials=N_TRIALS, n_jobs=min(N_TRIALS, MAX_JOBS)
-        )
-        best_config = tuner_results.best_config
-        print(best_config)
-        best_config_path = f"{gretel_dir}/best_config.json"
-        with open(best_config_path, "w") as f:
-            f.write(json.dumps(best_config, indent=4))
+        # print(f"Running optuna with {N_TRIALS} trials and {MAX_JOBS}")
+        # tuner_results = tuner.run(
+        #     n_trials=N_TRIALS, n_jobs=min(N_TRIALS, MAX_JOBS)
+        # )
+        # best_config = tuner_results.best_config
+        # print(best_config)
+        # best_config_path = f"{gretel_dir}/best_config.json"
+        # with open(best_config_path, "w") as f:
+        #     f.write(json.dumps(best_config, indent=4))
 
-        logger.info("Starting Gretel training step.")
-        gretel = Gretel(api_key=GRETEL_API_KEY, validate=True)
-        trained = gretel.submit_train(
-            base_config="tabular-actgan",
+        # logger.info("Starting Gretel training step.")
+        # gretel = Gretel(api_key=GRETEL_API_KEY, validate=True)
+        # trained = gretel.submit_train(
+        #     base_config="tabular-actgan",
+        #     data_source=data_source,
+        #     params=best_config["models"][0]["actgan"]["params"],
+        #     privacy_filters={"similarity": None, "outliers": None},
+        # )
+
+        tuner_config = """
+            base_config: tabular-actgan
+
+            params:
+                batch_size:
+                    choices: [500, 1000, 2000]
+
+                epochs:
+                    choices: [200, 400, 600, 800, 1200, 1400, 1600]
+
+                generator_lr:
+                    log_range: [0.00001, 0.001]
+
+                discriminator_lr:
+                    log_range: [0.00001, 0.001]
+
+                generator_dim:
+                    choices: [
+                        [512, 512, 512, 512],
+                        [1024, 1024],
+                        [1024, 1024, 1024],
+                        [2048, 2048],
+                        [2048, 2048, 2048]
+                    ]
+        """
+
+        def sampler_callback(model_section):
+            """Always set discriminator_dim = generator_dim."""
+            model_section["params"]["discriminator_dim"] = model_section[
+                "params"
+            ]["generator_dim"]
+            return model_section
+
+        tuner_results = gretel.run_tuner(
+            tuner_config,
             data_source=data_source,
-            params=best_config["models"][0]["actgan"]["params"],
-            privacy_filters={"similarity": None, "outliers": None},
+            n_jobs=MAX_JOBS,
+            n_trials=N_TRIALS,
+            metric=optimization_metric,
+            sampler_callback=sampler_callback,
+        )
+
+        # retrieve best model
+        best_model = gretel.fetch_train_job_results(
+            tuner_results.best_model_id
         )
 
         logger.info("Writing out Gretel sqs report.")
@@ -155,18 +200,21 @@ if __name__ == "__main__":
         report_full_path = f"{gretel_dir}/report_full.json"
         report_synth_data_path = f"{gretel_dir}/report_synth_data.csv"
         with open(report_full_path, "w") as f:
-            f.write(str(trained.report))
+            f.write(str(best_model.report))
         with open(report_summary_path, "w") as f:
-            f.write(json.dumps(trained.report.quality_scores, indent=4))
-        df_synth_report = trained.fetch_report_synthetic_data()
+            f.write(json.dumps(best_model.report.quality_scores, indent=4))
+        df_synth_report = best_model.fetch_report_synthetic_data()
         df_synth_report.to_csv(
             report_synth_data_path, header=True, index=False
         )
 
         logger.info("Starting Gretel generation step.")
         RECORDS_TO_GENERATE = int(len(data_source) * generate_factor)
+        # generated = gretel.submit_generate(
+        #     trained.model_id, num_records=RECORDS_TO_GENERATE
+        # )
         generated = gretel.submit_generate(
-            trained.model_id, num_records=RECORDS_TO_GENERATE
+            best_model.model_id, num_records=RECORDS_TO_GENERATE
         )
 
         logger.info("Augment training data with synthetic data .")
