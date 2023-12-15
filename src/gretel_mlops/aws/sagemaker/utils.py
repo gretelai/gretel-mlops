@@ -208,8 +208,7 @@ class MLMetric(BaseTunerMetric):
         self.preprocess = preprocess
         self.target_column = target_column
         self.objective = objective
-        self.objective_type = objective_type
-        self.direction = objective_type
+        self.direction = MetricDirection[objective_type.upper()]
 
     def __call__(self, model: Model):
         X_train = pd.read_csv(
@@ -223,7 +222,7 @@ class MLMetric(BaseTunerMetric):
         y_val = X_val.pop(self.target_column)
         X_val.columns = X_train.columns
 
-        study = optuna.create_study(direction=self.objective_type.lower())
+        study = optuna.create_study(direction=self.direction.value)
         study.optimize(
             lambda trial: objective(
                 trial,
