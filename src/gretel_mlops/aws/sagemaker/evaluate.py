@@ -21,7 +21,7 @@ logger.addHandler(logging.StreamHandler())
 
 if __name__ == "__main__":
     # Initialize logging and argument parsing
-    logger.debug("Starting evaluation.")
+    logger.info("Starting evaluation.")
     parser = argparse.ArgumentParser()
     # Define arguments for the script
     parser.add_argument("--ml-task", type=str, default="classification")
@@ -38,17 +38,17 @@ if __name__ == "__main__":
     extract_tar_safely(model_path)
 
     # Load the xgboost model
-    logger.debug("Loading xgboost model.")
+    logger.info("Loading xgboost model.")
     model = xgboost.Booster()
     model.load_model("xgboost-model")
 
     # Load the test data
-    logger.debug("Reading test data.")
+    logger.info("Reading test data.")
     test_path = "/opt/ml/processing/test/test.csv"
     df = pd.read_csv(test_path)
 
     # Separate features and target variable from test data
-    logger.debug("Preparing test data.")
+    logger.info("Preparing test data.")
     y_test = df.pop(target_column)
     X_test = xgboost.DMatrix(df.values)
 
@@ -57,7 +57,7 @@ if __name__ == "__main__":
     predictions = model.predict(X_test)
 
     # Calculate and generate the ML metrics based on the task
-    logger.debug("Calculating ML metrics.")
+    logger.info("Calculating ML metrics.")
     if ml_task == "regression":
         report_dict = generate_regression_report(y_test, predictions)
     else:

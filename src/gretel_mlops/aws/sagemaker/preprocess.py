@@ -39,7 +39,7 @@ def read_data(path, base_dir):
     s3 = boto3.resource("s3")
     s3.Bucket(bucket).download_file(key, fn)
 
-    logger.debug("Reading downloaded data.")
+    logger.info("Reading downloaded data.")
     df = pd.read_csv(fn)
     os.unlink(fn)
 
@@ -48,7 +48,7 @@ def read_data(path, base_dir):
 
 if __name__ == "__main__":
     # Setup argparse for command line arguments
-    logger.debug("Starting preprocessing.")
+    logger.info("Starting preprocessing.")
     parser = argparse.ArgumentParser()
     # Define the command line arguments
     parser.add_argument("--train-path", type=str, required=True)
@@ -90,7 +90,7 @@ if __name__ == "__main__":
         used_cols = feature_columns
 
     # Setup transformers for numeric and categorical features
-    logger.debug("Defining transformers.")
+    logger.info("Defining transformers.")
     categorical_features = (
         df[used_cols]
         .select_dtypes(include=["object", "category"])
@@ -147,14 +147,14 @@ if __name__ == "__main__":
 
     # Check if a separate test dataset path is provided
     if test_path:
-        logger.debug("Processing test dataset.")
+        logger.info("Processing test dataset.")
         # Read and preprocess test data
         df_test = read_data(test_path, base_dir)
         X_test = df_test.sample(frac=1).reset_index(drop=True)
         y_test = X_test.pop(target_column)
     else:
         # Split the training data into training and test sets
-        logger.debug("Splitting train dataset into train and test subsets.")
+        logger.info("Splitting train dataset into train and test subsets.")
         X_train, X_test, y_train, y_test = train_test_split(
             X_train,
             y_train,
@@ -165,14 +165,14 @@ if __name__ == "__main__":
 
     # Check if a separate validation dataset path is provided
     if validation_path:
-        logger.debug("Processing validation dataset.")
+        logger.info("Processing validation dataset.")
         # Read and preprocess validation data
         df_valid = read_data(validation_path, base_dir)
         X_valid = df_valid.sample(frac=1).reset_index(drop=True)
         y_valid = X_valid.pop(target_column)
     else:
         # Split the training data into training and validation sets
-        logger.debug(
+        logger.info(
             "Splitting train dataset into train and validation subsets."
         )
         X_train, X_valid, y_train, y_valid = train_test_split(
@@ -206,7 +206,7 @@ if __name__ == "__main__":
     test.to_csv(f"{base_dir}/test/test.csv", header=True, index=False)
 
     # Optionally, save the original training data for further reference or use
-    logger.debug("Writing out original training data.")
+    logger.info("Writing out original training data.")
     train = X_train
     train[target_column] = y_train
     train.to_csv(
