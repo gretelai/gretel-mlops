@@ -24,7 +24,6 @@ def preprocess_component(
   from sklearn.pipeline import Pipeline
   from sklearn.preprocessing import StandardScaler, OneHotEncoder
   from sklearn.model_selection import train_test_split
-  from joblib import dump
 
   logger = logging.getLogger()
   logger.setLevel(logging.INFO)
@@ -82,7 +81,7 @@ def preprocess_component(
   preprocess.fit(X_train)
 
   logger.info("Writing out preprocessing object")
-  dump(preprocess, f"{output_dir}/preprocess.joblib")
+  joblib.dump(preprocess, f"{output_dir}/preprocess.joblib")
 
   logger.info("Splitting %d rows of data into train, validation, test datasets.", len(X_train))
   if test_path:

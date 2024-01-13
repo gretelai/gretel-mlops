@@ -1,4 +1,4 @@
-# Preprocess step
+# Register step
 
 from kfp.dsl import component, InputPath
 
