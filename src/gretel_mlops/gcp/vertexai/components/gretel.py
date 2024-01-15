@@ -8,10 +8,10 @@ from kfp.dsl import component, OutputPath, InputPath
     packages_to_install=[
         "google-cloud-aiplatform",
         "google-cloud-secret-manager",
+        "gretel-client[gcp,tuner]",
         "git+https://github.com/gretelai/gretel-mlops",
         "imblearn",
         "optuna",
-        "pandas",
         "scikit-learn",
         "xgboost",
     ],
