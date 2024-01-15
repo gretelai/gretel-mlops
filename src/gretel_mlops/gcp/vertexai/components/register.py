@@ -67,7 +67,7 @@ def register_component(
         )
         logger.info(
             f"Model {model_display_name} registered "
-            f"with ID: {model_to_register.id}"
+            f"with ID: {model_to_register.resource_name}"
         )
 
     else:
