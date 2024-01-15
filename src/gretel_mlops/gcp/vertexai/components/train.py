@@ -6,13 +6,14 @@ from kfp.dsl import component, OutputPath, InputPath
 @component(
     base_image="python:3.10",
     packages_to_install=[
-        "xgboost",
-        "scikit-learn",
+        "google-cloud-aiplatform",
+        "google-cloud-secret-manager",
+        "git+https://github.com/gretelai/gretel-mlops",
         "imblearn",
         "optuna",
         "pandas",
-        "git+https://github.com/gretelai/gretel-mlops",
-        "google-cloud-aiplatform",
+        "scikit-learn",
+        "xgboost",
     ],
 )
 def train_component(
