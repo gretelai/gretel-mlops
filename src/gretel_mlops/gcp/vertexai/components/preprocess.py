@@ -13,7 +13,6 @@ from kfp.dsl import component, OutputPath
     ],
 )
 def preprocess_component(config: str, output_dir: OutputPath()):
-    import argparse
     import logging
     import json
     import joblib
@@ -21,7 +20,6 @@ def preprocess_component(config: str, output_dir: OutputPath()):
 
     import pandas as pd
 
-    from google.cloud import storage
     from sklearn.compose import ColumnTransformer
     from sklearn.impute import SimpleImputer
     from sklearn.pipeline import Pipeline

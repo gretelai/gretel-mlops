@@ -1,4 +1,3 @@
-import json
 import optuna
 import pandas as pd
 import numpy as np
@@ -7,6 +6,7 @@ import xgboost as xgb
 from google.cloud import secretmanager
 from google.api_core.exceptions import GoogleAPICallError
 from gretel_client.projects.models import Model
+from gretel_client.tuner import BaseTunerMetric, MetricDirection
 from imblearn.over_sampling import RandomOverSampler
 from sklearn.metrics import (
     roc_auc_score,
