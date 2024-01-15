@@ -124,6 +124,33 @@ def gretel_component(
             objective_type=objective_type,
         )
 
+        # tuner_config = """
+        #   base_config: tabular-actgan
+
+        #   params:
+        #       batch_size:
+        #           choices: [500, 1000, 2000]
+
+        #       epochs:
+        #           choices: [200, 400, 600, 800, 1200, 1400, 1600]
+
+        #       generator_lr:
+        #           log_range: [0.00001, 0.001]
+
+        #       discriminator_lr:
+        #           log_range: [0.00001, 0.001]
+
+        #       generator_dim:
+        #           choices: [
+        #               [512, 512, 512, 512],
+        #               [1024, 1024],
+        #               [1024, 1024, 1024],
+        #               [2048, 2048],
+        #               [2048, 2048, 2048]
+        #           ]
+        # """
+
+
         tuner_config = """
           base_config: tabular-actgan
 
@@ -132,7 +159,7 @@ def gretel_component(
                   choices: [500, 1000, 2000]
 
               epochs:
-                  choices: [200, 400, 600, 800, 1200, 1400, 1600]
+                  choices: [20, 30]
 
               generator_lr:
                   log_range: [0.00001, 0.001]
@@ -142,13 +169,10 @@ def gretel_component(
 
               generator_dim:
                   choices: [
-                      [512, 512, 512, 512],
-                      [1024, 1024],
-                      [1024, 1024, 1024],
-                      [2048, 2048],
-                      [2048, 2048, 2048]
+                      [512, 512],
+                      [48, 48, 48]
                   ]
-      """
+        """
 
         def sampler_callback(model_section):
             """Always set discriminator_dim = generator_dim."""
