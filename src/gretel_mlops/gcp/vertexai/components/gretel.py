@@ -182,8 +182,8 @@ def gretel_component(
             return model_section
 
         # Running Gretel tuner with the defined configuration
-        N_TRIALS = 16
-        MAX_JOBS = 4
+        N_TRIALS = 2#16
+        MAX_JOBS = 2#4
         tuner_results = gretel.run_tuner(
             tuner_config,
             data_source=data_source,
