@@ -18,7 +18,7 @@ from kfp.dsl import component, OutputPath, InputPath
 def gretel_component(
     config: str,
     gretel_secret: str,
-    project_number: int,
+    project_number: str,
     input_dir: InputPath(),
     output_dir: OutputPath(),
 ):
