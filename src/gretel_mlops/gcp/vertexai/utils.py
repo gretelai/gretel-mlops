@@ -30,9 +30,9 @@ def get_secret(secret_id, project_number):
         response = client.access_secret_version(
             request={"name": secret_version}
         )
-        gretel_api_key = response.payload.data.decode("UTF-8")
-        return gretel_api_key
-
+    except PermissionDenied as e:
+        print(f"Permission denied: {e.message}")
+        return None
     except GoogleAPICallError as e:
         print(f"An error occurred accessing the secret: {e}")
         return None
