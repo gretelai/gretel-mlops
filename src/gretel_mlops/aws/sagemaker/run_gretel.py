@@ -50,13 +50,13 @@ if __name__ == "__main__":
     mode = args.mode
     sink_bucket = args.sink_bucket
 
-    logger.info("Reading train data.")
     # Define the path to the source training data and read it
+    logger.info("Reading train data.")
     source_path = "/opt/ml/processing/train_source/train.csv"
     data_source = pd.read_csv(source_path)
 
-    logger.info("Reading validation data.")
     # Define the path to the validation data and read it
+    logger.info("Reading validation data.")
     validation_path = "/opt/ml/processing/validation/validation.csv"
     data_validation = pd.read_csv(validation_path)
 
@@ -66,8 +66,8 @@ if __name__ == "__main__":
     pathlib.Path(gretel_dir).mkdir(parents=True, exist_ok=True)
     pathlib.Path(output_dir).mkdir(parents=True, exist_ok=True)
 
-    logger.info("Loading preprocessing model.")
     # Load the preprocessing model saved earlier
+    logger.info("Loading preprocessing model.")
     preprocess_path = "/opt/ml/processing/preprocess/preprocess.pkl"
     preprocess = joblib.load(preprocess_path)
 
@@ -84,10 +84,12 @@ if __name__ == "__main__":
         train.to_csv(train_data_path, header=False, index=False)
 
     else:
-        # Configure a Gretel session for synthetic data generation
-        logger.info(f"Configuring a {mode} Gretel session.")
+        # Retrieve Gretel API key from secret
+        logger.info("Retrieve Gretel API key from secret.")
         GRETEL_API_KEY = get_secret(gretel_secret, region)
 
+        # Configure a Gretel session for synthetic data generation
+        logger.info(f"Configuring a {mode} Gretel session.")
         GRETEL_PROJECT_NAME = "sagemaker-pipelines-gretel-hyptuning"
         gretel = Gretel(
             project_name=GRETEL_PROJECT_NAME,
@@ -190,8 +192,9 @@ if __name__ == "__main__":
             best_model.model_id, num_records=RECORDS_TO_GENERATE
         )
 
+        # Depending on the strategy, replace or augment training data with
+        # synthetic data
         logger.info("Augment training data with synthetic data.")
-        # Depending on the strategy, replace or augment training data with synthetic data
         if strategy == "replace":
             df_train_synth = generated.synthetic_data
         else:
@@ -201,15 +204,15 @@ if __name__ == "__main__":
                 ignore_index=True,
             )
 
-        logger.info("Apply preprocessing transformations.")
         # Apply preprocessing transformations to the synthetic data
+        logger.info("Apply preprocessing transformations.")
         y_train_synth = df_train_synth.pop(target_column)
         train_synth_pre = pd.DataFrame(preprocess.transform(df_train_synth))
         train_synth = pd.concat(
             [y_train_synth.reset_index(drop=True), train_synth_pre], axis=1
         )
 
-        logger.info("Write out training data augmented with synthetic data.")
         # Write out the augmented training data to a CSV file
+        logger.info("Write out training data augmented with synthetic data.")
         train_synth_data_path = f"{output_dir}/train.csv"
         train_synth.to_csv(train_synth_data_path, header=False, index=False)

@@ -79,6 +79,7 @@ if __name__ == "__main__":
     drop_columns = args.drop_columns
 
     # Read and preprocess training data
+    logger.info("Reading in dataset.")
     df = read_data(train_path, base_dir)
     # Define feature columns
     feature_columns = [col for col in df.columns if col != target_column]
@@ -205,7 +206,7 @@ if __name__ == "__main__":
     test = pd.concat([y_test.reset_index(drop=True), test_pre], axis=1)
     test.to_csv(f"{base_dir}/test/test.csv", header=True, index=False)
 
-    # Optionally, save the original training data for further reference or use
+    # Save the original training data for further reference or use
     logger.info("Writing out original training data.")
     train = X_train
     train[target_column] = y_train

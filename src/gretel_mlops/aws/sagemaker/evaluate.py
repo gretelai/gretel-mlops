@@ -1,4 +1,4 @@
-"""Evaluation script for measuring mean squared error."""
+"""Evaluation script to assess ML model performance."""
 
 import argparse
 import json

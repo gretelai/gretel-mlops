@@ -120,7 +120,8 @@ def compute_optimal_f1(y_test, predictions):
         predictions (np.ndarray): Predicted probabilities.
 
     Returns:
-        tuple: Best F1 score, optimal precision, optimal recall, and confusion matrix.
+        tuple: Best F1 score, optimal precision,
+          optimal recall, and confusion matrix.
     """
     # Compute precision-recall curve
     precision, recall, thresholds = precision_recall_curve(y_test, predictions)
@@ -228,7 +229,8 @@ def objective(trial, X_train, y_train, X_val, y_val, task, objective, metric):
         y_train (pd.Series): Training target data.
         X_val (pd.DataFrame): Validation feature data.
         y_val (pd.Series): Validation target data.
-        task (str): Type of machine learning task ('regression' or 'classification').
+        task (str): Type of machine learning task ('regression' or
+          'classification').
         objective (str): Objective function for the XGBoost model.
         metric (str): Metric to optimize.
 
@@ -267,7 +269,8 @@ def objective(trial, X_train, y_train, X_val, y_val, task, objective, metric):
 
 class MLMetric(BaseTunerMetric):
     """
-    Custom metric for model evaluation in the context of Gretel's synthetic data.
+    Custom metric for model evaluation in the context of Gretel's synthetic
+     data.
 
     Args:
         df_test (pd.DataFrame): The test dataset.
@@ -276,7 +279,8 @@ class MLMetric(BaseTunerMetric):
         metric (str, optional): Name of the metric to optimize.
         task (str, optional): Type of machine learning task.
         objective (str, optional): Objective function for the XGBoost model.
-        objective_type (str, optional): Direction of optimization ('Maximize' or 'Minimize').
+        objective_type (str, optional): Direction of optimization ('Maximize'
+          or 'Minimize').
     """
 
     def __init__(

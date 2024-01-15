@@ -134,19 +134,23 @@ def get_pipeline(
     """
     Constructs and returns a SageMaker ML Pipeline for tabular data processing.
 
-    This pipeline includes steps for data preprocessing, synthetic data generation,
-    model training, evaluation, and conditional model registration based on evaluation results.
+    This pipeline includes steps for data preprocessing, synthetic data
+     generation, model training, evaluation, and conditional model registration
+     based on evaluation results.
 
     Args:
         region (str): AWS region where the pipeline will be created.
         sagemaker_project_name (str, optional): Name of the SageMaker project.
         role (str, optional): IAM role for pipeline execution.
         default_bucket (str, optional): S3 bucket for storing artifacts.
-        model_package_group_name (str, optional): Name for the model package group.
+        model_package_group_name (str, optional): Name for the model
+          package group.
         pipeline_name (str, optional): Name of the pipeline.
         base_job_prefix (str, optional): Prefix for naming SageMaker jobs.
-        processing_instance_type (str, optional): EC2 instance type for processing jobs.
-        training_instance_type (str, optional): EC2 instance type for training jobs.
+        processing_instance_type (str, optional): EC2 instance type for
+          processing jobs.
+        training_instance_type (str, optional): EC2 instance type for
+          training jobs.
         gretel_secret (str, optional): Secret key for Gretel API.
         config (dict, optional): Configuration parameters for the pipeline.
 
