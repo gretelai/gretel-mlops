@@ -26,7 +26,7 @@ def gretel_component(
     import os
     import json
     import pandas as pd
-    from joblib import load
+    import joblib
     from gretel_client import Gretel
     from gretel_mlops.gcp.vertexai.utils import (
         MLMetric,
@@ -74,7 +74,7 @@ def gretel_component(
 
     # Load the preprocessing model saved earlier
     logger.info("Loading preprocessing model.")
-    preprocess = load(f"{input_dir}/preprocess.joblib")
+    preprocess = joblib.load(f"{input_dir}/preprocess.joblib")
 
     if strategy is None:
         # If no strategy is provided, use the source data directly

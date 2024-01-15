@@ -16,6 +16,7 @@ def preprocess_component(config: str, output_dir: OutputPath()):
     import argparse
     import logging
     import json
+    import joblib
     import os
 
     import pandas as pd
