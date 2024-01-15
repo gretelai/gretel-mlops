@@ -38,14 +38,6 @@ def gretel_component(
     logger.setLevel(logging.INFO)
     logger.addHandler(logging.StreamHandler())
 
-    # from imblearn.over_sampling import RandomOverSampler
-    # def naive_upsample(df, target_column, target_balance=1.0):
-    #     over_sampler = RandomOverSampler(sampling_strategy=target_balance)
-    #     y = df.pop(target_column)
-    #     df_resampled, y_resampled = over_sampler.fit_resample(df, y)
-    #     df_resampled[target_column] = y_resampled
-    #     return df_resampled
-
     # Ensure the output directory exists
     os.makedirs(output_dir, exist_ok=True)
 
@@ -197,53 +189,6 @@ def gretel_component(
         best_model = gretel.fetch_train_job_results(
             tuner_results.best_model_id
         )
-
-        # project = gretel.get_project()
-        # artifact_id = project.upload_artifact(data_source)
-
-        # config = read_model_config("synthetics/tabular-actgan")
-        # config["models"][0]["actgan"]["privacy_filters"]["outliers"] = None
-        # config["models"][0]["actgan"]["privacy_filters"]["similarity"] = None
-        # config["models"][0]["actgan"]["generate"]["num_records"] = min(25_000, len(data_source))
-
-        # optimization_metric = MLMetric(
-        #     data_validation,
-        #     preprocess,
-        #     target_column,
-        #     metric=ml_eval_metric,
-        #     task=ml_task,
-        #     objective=objective,
-        #     objective_type=objective_type
-        # )
-        # tuner_config = GretelHyperParameterConfig(
-        #     project=project,
-        #     artifact_id=artifact_id,
-        #     epoch_choices=[20],#0, 400, 600, 800, 1200, 1400, 1600],
-        #     batch_size_choices=[500, 1000, 2000],
-        #     base_config=config,
-        #     metric=optimization_metric,
-        # )
-
-        # tuner = GretelHyperParameterTuner(tuner_config)
-        # N_TRIALS = 16
-        # MAX_JOBS = 4
-
-        # print(f"Running optuna with {N_TRIALS} trials and {MAX_JOBS}")
-        # tuner_results = tuner.run(n_trials=N_TRIALS, n_jobs=min(N_TRIALS, MAX_JOBS))
-        # best_config = tuner_results.best_config
-        # print(best_config)
-        # best_config_path = f"{output_dir}/best_config.json"
-        # with open(best_config_path, "w") as f:
-        #     f.write(json.dumps(best_config, indent=4))
-
-        # logger.info("Starting Gretel training step.")
-        # gretel = Gretel(api_key=gretel_api_key, validate=True)
-        # trained = gretel.submit_train(
-        #     base_config="tabular-actgan",
-        #     data_source=data_source,
-        #     params=best_config['models'][0]['actgan']['params'],
-        #     privacy_filters={"similarity": None, "outliers": None},
-        # )
 
         # Writing out Gretel quality scores and report
         logger.info("Writing out Gretel sqs report.")
