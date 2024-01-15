@@ -117,33 +117,6 @@ def gretel_component(
             objective_type=objective_type,
         )
 
-        # tuner_config = """
-        #   base_config: tabular-actgan
-
-        #   params:
-        #       batch_size:
-        #           choices: [500, 1000, 2000]
-
-        #       epochs:
-        #           choices: [200, 400, 600, 800, 1200, 1400, 1600]
-
-        #       generator_lr:
-        #           log_range: [0.00001, 0.001]
-
-        #       discriminator_lr:
-        #           log_range: [0.00001, 0.001]
-
-        #       generator_dim:
-        #           choices: [
-        #               [512, 512, 512, 512],
-        #               [1024, 1024],
-        #               [1024, 1024, 1024],
-        #               [2048, 2048],
-        #               [2048, 2048, 2048]
-        #           ]
-        # """
-
-
         tuner_config = """
           base_config: tabular-actgan
 
@@ -152,7 +125,7 @@ def gretel_component(
                   choices: [500, 1000, 2000]
 
               epochs:
-                  choices: [20, 30]
+                  choices: [200, 400, 600, 800, 1200, 1400, 1600]
 
               generator_lr:
                   log_range: [0.00001, 0.001]
@@ -162,8 +135,11 @@ def gretel_component(
 
               generator_dim:
                   choices: [
-                      [512, 512],
-                      [48, 48, 48]
+                      [512, 512, 512, 512],
+                      [1024, 1024],
+                      [1024, 1024, 1024],
+                      [2048, 2048],
+                      [2048, 2048, 2048]
                   ]
         """
 
@@ -175,8 +151,8 @@ def gretel_component(
             return model_section
 
         # Running Gretel tuner with the defined configuration
-        N_TRIALS = 2#16
-        MAX_JOBS = 2#4
+        N_TRIALS = 16
+        MAX_JOBS = 4
         tuner_results = gretel.run_tuner(
             tuner_config,
             data_source=data_source,
