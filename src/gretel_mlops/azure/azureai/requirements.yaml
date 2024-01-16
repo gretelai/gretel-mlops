@@ -4,7 +4,7 @@ channels:
 dependencies:
   - python=3.10
   - pip:
-    - gretel-client[aws,tuner]
+    - gretel-client[azure,tuner]
     - scikit-learn==1.3.0
     - imblearn
     - xgboost
