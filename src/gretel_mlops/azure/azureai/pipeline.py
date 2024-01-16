@@ -2,7 +2,7 @@ import yaml
 
 from azure.ai.ml import Input, MLClient, Output, command
 from azure.ai.ml.constants import AssetTypes
-from azure.ai.ml.entities import Data
+from azure.ai.ml.entities import Data, Environment
 from azure.identity import DefaultAzureCredential
 
 
