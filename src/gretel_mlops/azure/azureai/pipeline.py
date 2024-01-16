@@ -109,36 +109,6 @@ def define_pipeline_components(
         subscription_id, resource_group, workspace_name
     )
 
-    # Create an Azure ML environment object
-    # This environment specifies the dependencies and runtime context for the pipeline steps
-    # It includes a reference to a Conda environment file and a base Docker image
-
-    # Get current directory
-    current_directory = os.getcwd()
-    file_name = "dummy_file.txt"
-    with open(file_name, "w") as file:
-        file.write("dummy")
-    # Get list of files and directories in the current directory
-    directory_contents = os.listdir(current_directory)
-    # Log the current directory and its contents
-    logger.info(f"Current directory: {current_directory}")
-    logger.info(f"Contents: {directory_contents}") 
-
-    pipeline_job_env = Environment(
-        name=pipeline_job_env_name,
-        description="Environment for Gretel MLOps pipeline",
-        conda_file="requirements.yaml",  # Path to Conda dependencies file
-        image="mcr.microsoft.com/azureml/openmpi4.1.0-ubuntu20.04:latest",  # Base Docker image
-    )
-
-    # Register or update the environment in the Azure ML workspace
-    pipeline_job_env = ml_client.environments.create_or_update(pipeline_job_env)
-
-    # Print out the details of the registered environment
-    print(
-        f"Environment with name {pipeline_job_env.name} is registered to workspace, the environment version is {pipeline_job_env.version}"
-    )
-
     # Define and register the preprocess component of the pipeline
     preprocess_component = command(
         name="preprocess_component",
