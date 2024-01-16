@@ -13,6 +13,22 @@ from sklearn.metrics import (average_precision_score, confusion_matrix,
 
 
 def get_secret(secret_id, project_number):
+
+    """
+    Retrieves a secret value from Google Cloud Secret Manager.
+
+    This function initializes a Secret Manager client using the given project number,
+    constructs the resource ID of the secret, and then accesses the latest version
+    of the specified secret.
+
+    Args:
+        secret_id (str): The ID of the secret to retrieve.
+        project_number (str): The project number where the secret is stored.
+
+    Returns:
+        str: The secret value as a string if the retrieval is successful; None otherwise.
+    """
+ 
     # Initialize the client
     client = secretmanager.SecretManagerServiceClient()
     secret_version = (
