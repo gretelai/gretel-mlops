@@ -1,8 +1,9 @@
-"""Script to run Gretel synthetics on source data."""
+"""Evaluation script to assess ML model performance."""
 
 import argparse
 import json
 import logging
+
 import pandas as pd
 import xgboost as xgb
 import yaml
@@ -29,9 +30,6 @@ if __name__ == "__main__":
     # Extract configuration details
     target_column = config["dataset"]["target_column"]
     ml_task = config["ML"]["ml_task"]
-    ml_eval_metric = config["ML"]["ml_eval_metric"]
-    objective = config["ML"]["objective"]
-    objective_type = config["ML"]["objective_type"]
 
     # Extract arguments
     input_dir = args.input_dir
@@ -64,6 +62,7 @@ if __name__ == "__main__":
         report_dict = generate_classification_report(y_test, predictions)
     logger.info(f"Creating Report: {report_dict}")
 
+    # Write the evaluation report to a file
     logger.info("Writing out evaluation report")
     with open(f"{output_dir}/evaluation.json", "w") as f:
         f.write(json.dumps(report_dict))

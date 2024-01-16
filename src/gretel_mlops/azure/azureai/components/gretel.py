@@ -9,7 +9,7 @@ import joblib
 import pandas as pd
 import yaml
 from gretel_client import Gretel
-from utils import MLMetric, naive_upsample
+from utils import MLMetric, get_secret, naive_upsample
 
 warnings.filterwarnings("ignore")
 
@@ -22,6 +22,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     # Define the command line arguments
     parser.add_argument("--config", type=str, required=True)
+    parser.add_argument("--gretel-secret", type=str, required=True)
+    parser.add_argument("--gretel-key-vault", type=str, required=True)
     parser.add_argument("--input-dir", type=str, required=True)
     parser.add_argument("--output-dir", type=str, required=True)
     args = parser.parse_args()
@@ -43,6 +45,8 @@ if __name__ == "__main__":
     sink_bucket = config["gretel"]["sink_bucket"]
 
     # Extract arguments
+    gretel_secret = args.gretel_secret
+    gretel_key_vault = args.gretel_key_vault
     input_dir = args.input_dir
     output_dir = args.output_dir
 
@@ -73,7 +77,7 @@ if __name__ == "__main__":
     else:
         # Configure a Gretel session for synthetic data generation
         logger.info(f"Configuring a {mode} Gretel session.")
-        GRETEL_API_KEY = "grtu***"
+        GRETEL_API_KEY = get_secret(gretel_secret, gretel_key_vault)
 
         GRETEL_PROJECT_NAME = "azureai-pipelines-gretel-hyptuning"
         gretel = Gretel(

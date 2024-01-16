@@ -1,4 +1,5 @@
 import yaml
+
 from azure.ai.ml import Input, MLClient, Output, command
 from azure.ai.ml.constants import AssetTypes
 from azure.ai.ml.entities import Data
@@ -130,6 +131,8 @@ def define_pipeline_components(
         display_name="gretel_component",
         inputs={
             "config": Input(type="uri_file"),
+            "gretel_secret": Input(type="string"),
+            "gretel_key_vault": Input(type="string"),
             "input_dir": Input(type="uri_folder"),
         },
         outputs=dict(
@@ -138,6 +141,8 @@ def define_pipeline_components(
         code=src_dir,
         command=(
             "python gretel.py --config ${{inputs.config}} "
+            "--gretel-secret ${{inputs.gretel_secret}} "
+            "--gretel-key-vault ${{inputs.gretel_key_vault}} "
             "--input-dir ${{inputs.input_dir}} "
             "--output-dir ${{outputs.output_dir}}"
         ),

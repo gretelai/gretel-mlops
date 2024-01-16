@@ -1,4 +1,4 @@
-"""Script to run Gretel synthetics on source data."""
+"""Script to register ML model to model registry."""
 
 import argparse
 import json
@@ -79,8 +79,6 @@ if __name__ == "__main__":
             properties={"ml_metric_threshold": str(ml_metric_threshold)},
             model_framework=Model.Framework.CUSTOM,
         )
-
-        # Register the model
         logger.info(
             f"Model {model_display_name} registered "
             f"with ID: {model_to_register.id}"

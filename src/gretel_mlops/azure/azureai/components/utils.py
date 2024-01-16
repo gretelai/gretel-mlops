@@ -1,57 +1,54 @@
-import json
-import os
-import tarfile
 import warnings
 
-import boto3
 import numpy as np
 import optuna
 import pandas as pd
 import xgboost as xgb
-from botocore.exceptions import ClientError
+from azure.identity import DefaultAzureCredential
+from azure.keyvault.secrets import SecretClient
 from gretel_client.projects.models import Model
 from gretel_client.tuner import BaseTunerMetric, MetricDirection
 from imblearn.over_sampling import RandomOverSampler
-from sklearn.metrics import (average_precision_score, confusion_matrix,
-                             mean_absolute_error, mean_squared_error,
-                             precision_recall_curve, r2_score, roc_auc_score)
+from sklearn.metrics import (
+    average_precision_score,
+    confusion_matrix,
+    mean_absolute_error,
+    mean_squared_error,
+    precision_recall_curve,
+    r2_score,
+    roc_auc_score,
+)
 
 warnings.filterwarnings("ignore")
 
 
-def is_member_safe(member, target_directory):
+def get_secret(secret_name, key_vault_name):
     """
-    Checks if a tarfile member is safe to extract to avoid directory traversal.
+    Retrieves a secret value from Azure Key Vault.
 
     Args:
-        member (tarfile.TarInfo): The tarfile member to check.
-        target_directory (str): The target directory for extraction.
+        secret_name (str): The name of the secret.
+        key_vault_name (str): The name of the Azure Key Vault.
 
     Returns:
-        bool: True if the member is safe to extract, False otherwise.
+        str: The retrieved secret value.
     """
-    # Resolve the full paths to prevent directory traversal
-    target_directory = os.path.abspath(target_directory)
-    member_path = os.path.abspath(os.path.join(target_directory, member.name))
+    # URL to the Azure Key Vault
+    key_vault_url = f"https://{key_vault_name}.vault.azure.net/"
 
-    # Check if the member's path starts with the target directory path
-    return member_path.startswith(target_directory)
+    # Create a credential object using DefaultAzureCredential
+    credential = DefaultAzureCredential()
 
+    # Create a SecretClient object for the Key Vault
+    client = SecretClient(vault_url=key_vault_url, credential=credential)
 
-def extract_tar_safely(tar_path, target_directory="."):
-    """
-    Safely extracts a tar file to a specified directory.
-
-    Args:
-        tar_path (str): Path to the tar file.
-        target_directory (str): Directory to extract the tar file to.
-    """
-    with tarfile.open(tar_path, "r") as tar:
-        # Extract only safe members
-        safe_members = [
-            m for m in tar.getmembers() if is_member_safe(m, target_directory)
-        ]
-        tar.extractall(path=target_directory, members=safe_members)
+    try:
+        # Retrieve the secret value
+        retrieved_secret = client.get_secret(secret_name)
+        return retrieved_secret.value
+    except Exception as e:
+        print(f"An error occurred accessing the secret: {e}")
+        return None
 
 
 def naive_upsample(df, target_column, target_balance=1.0):
