@@ -1,6 +1,6 @@
 """Script to preprocess source data."""
 
-from kfp.dsl import component, OutputPath
+from kfp.dsl import OutputPath, component
 
 
 @component(
@@ -13,18 +13,17 @@ from kfp.dsl import component, OutputPath
     ],
 )
 def preprocess_component(config: str, output_dir: OutputPath()):
-    import logging
     import json
-    import joblib
+    import logging
     import os
 
+    import joblib
     import pandas as pd
-
     from sklearn.compose import ColumnTransformer
     from sklearn.impute import SimpleImputer
-    from sklearn.pipeline import Pipeline
-    from sklearn.preprocessing import StandardScaler, OneHotEncoder
     from sklearn.model_selection import train_test_split
+    from sklearn.pipeline import Pipeline
+    from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)

@@ -1,22 +1,15 @@
+import numpy as np
 import optuna
 import pandas as pd
-import numpy as np
 import xgboost as xgb
-
+from google.api_core.exceptions import GoogleAPICallError, PermissionDenied
 from google.cloud import secretmanager
-from google.api_core.exceptions import GoogleAPICallError
 from gretel_client.projects.models import Model
 from gretel_client.tuner import BaseTunerMetric, MetricDirection
 from imblearn.over_sampling import RandomOverSampler
-from sklearn.metrics import (
-    roc_auc_score,
-    average_precision_score,
-    precision_recall_curve,
-    confusion_matrix,
-    mean_squared_error,
-    mean_absolute_error,
-    r2_score,
-)
+from sklearn.metrics import (average_precision_score, confusion_matrix,
+                             mean_absolute_error, mean_squared_error,
+                             precision_recall_curve, r2_score, roc_auc_score)
 
 
 def get_secret(secret_id, project_number):

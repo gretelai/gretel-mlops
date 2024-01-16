@@ -1,6 +1,6 @@
 """Script to register ML model to model registry."""
 
-from kfp.dsl import component, InputPath
+from kfp.dsl import InputPath, component
 
 
 @component(
@@ -18,6 +18,7 @@ def register_component(
 ):
     import json
     import logging
+
     import pandas as pd
     from google.cloud import aiplatform
 

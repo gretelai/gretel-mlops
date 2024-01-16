@@ -1,6 +1,6 @@
 """Evaluation script to assess ML model performance."""
 
-from kfp.dsl import component, OutputPath, InputPath
+from kfp.dsl import InputPath, OutputPath, component
 
 
 @component(
@@ -23,15 +23,15 @@ def evaluate_component(
     model_dir: InputPath(),
     output_dir: OutputPath(),
 ):
+    import json
     import logging
     import os
-    import json
+
     import pandas as pd
     import xgboost as xgb
+
     from gretel_mlops.gcp.vertexai.utils import (
-        generate_regression_report,
-        generate_classification_report,
-    )
+        generate_classification_report, generate_regression_report)
 
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)

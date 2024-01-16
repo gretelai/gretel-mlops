@@ -1,6 +1,6 @@
 """Script to run Gretel synthetics on source data."""
 
-from kfp.dsl import component, OutputPath, InputPath
+from kfp.dsl import InputPath, OutputPath, component
 
 
 @component(
@@ -23,17 +23,16 @@ def gretel_component(
     input_dir: InputPath(),
     output_dir: OutputPath(),
 ):
+    import json
     import logging
     import os
-    import json
-    import pandas as pd
+
     import joblib
+    import pandas as pd
     from gretel_client import Gretel
-    from gretel_mlops.gcp.vertexai.utils import (
-        MLMetric,
-        naive_upsample,
-        get_secret,
-    )
+
+    from gretel_mlops.gcp.vertexai.utils import (MLMetric, get_secret,
+                                                 naive_upsample)
 
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)

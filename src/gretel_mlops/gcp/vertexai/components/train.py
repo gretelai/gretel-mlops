@@ -1,6 +1,6 @@
 """Script to run train ML model."""
 
-from kfp.dsl import component, OutputPath, InputPath
+from kfp.dsl import InputPath, OutputPath, component
 
 
 @component(
@@ -23,13 +23,14 @@ def train_component(
     gretel_dir: InputPath(),
     output_dir: OutputPath(),
 ):
-    import logging
     import json
-    import optuna
+    import logging
     import os
 
+    import optuna
     import pandas as pd
     import xgboost as xgb
+
     from gretel_mlops.gcp.vertexai.utils import objective_func
 
     logger = logging.getLogger()
