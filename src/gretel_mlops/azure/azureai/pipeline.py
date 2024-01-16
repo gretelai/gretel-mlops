@@ -107,6 +107,7 @@ def define_pipeline_components(
     # Create an Azure ML environment object
     # This environment specifies the dependencies and runtime context for the pipeline steps
     # It includes a reference to a Conda environment file and a base Docker image
+    print("test")
     pipeline_job_env = Environment(
         name=pipeline_job_env_name,
         description="Environment for Gretel MLOps pipeline",
