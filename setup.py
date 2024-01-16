@@ -10,5 +10,6 @@ setup(
     include_package_data=True,
     package_data={
         "gretel_mlops.aws.sagemaker": ["requirements.txt"],
+        "gretel_mlops.azure.azureai": ["requirements.yaml"],
     },
 )
