@@ -1,15 +1,10 @@
-import logging
 import yaml
-import os
 
 from azure.ai.ml import Input, MLClient, Output, command
 from azure.ai.ml.constants import AssetTypes
-from azure.ai.ml.entities import Data, Environment
+from azure.ai.ml.entities import Data
 from azure.identity import DefaultAzureCredential
 
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
-logger.addHandler(logging.StreamHandler())
 
 def create_ml_client(subscription_id, resource_group, workspace_name):
     """
@@ -85,7 +80,7 @@ def define_pipeline_components(
     resource_group,
     workspace_name,
     pipeline_job_env_name,
-    # pipeline_job_env_version,
+    pipeline_job_env_version,
 ):
     """
     Define and register the components of the machine learning pipeline.
@@ -109,6 +104,7 @@ def define_pipeline_components(
         subscription_id, resource_group, workspace_name
     )
 
+
     # Define and register the preprocess component of the pipeline
     preprocess_component = command(
         name="preprocess_component",
@@ -124,7 +120,7 @@ def define_pipeline_components(
             "python preprocess.py --config ${{inputs.config}} "
             "--output-dir ${{outputs.output_dir}}"
         ),
-        environment=f"{pipeline_job_env.name}:{pipeline_job_env.version}",
+        environment=f"{pipeline_job_env_name}:{pipeline_job_env_version}",
     )
     preprocess_component = ml_client.create_or_update(
         preprocess_component.component
