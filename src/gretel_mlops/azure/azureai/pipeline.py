@@ -115,6 +115,9 @@ def define_pipeline_components(
 
     # Get current directory
     current_directory = os.getcwd()
+    file_name = "dummy_file.txt"
+    with open(file_name, "w") as file:
+        file.write("dummy")
     # Get list of files and directories in the current directory
     directory_contents = os.listdir(current_directory)
     # Log the current directory and its contents
