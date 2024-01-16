@@ -1,10 +1,15 @@
+import logging
 import yaml
+import os
 
 from azure.ai.ml import Input, MLClient, Output, command
 from azure.ai.ml.constants import AssetTypes
 from azure.ai.ml.entities import Data, Environment
 from azure.identity import DefaultAzureCredential
 
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+logger.addHandler(logging.StreamHandler())
 
 def create_ml_client(subscription_id, resource_group, workspace_name):
     """
@@ -107,7 +112,15 @@ def define_pipeline_components(
     # Create an Azure ML environment object
     # This environment specifies the dependencies and runtime context for the pipeline steps
     # It includes a reference to a Conda environment file and a base Docker image
-    print("test")
+
+    # Get current directory
+    current_directory = os.getcwd()
+    # Get list of files and directories in the current directory
+    directory_contents = os.listdir(current_directory)
+    # Log the current directory and its contents
+    logger.info(f"Current directory: {current_directory}")
+    logger.info(f"Contents: {directory_contents}") 
+
     pipeline_job_env = Environment(
         name=pipeline_job_env_name,
         description="Environment for Gretel MLOps pipeline",
