@@ -98,12 +98,11 @@ def define_pipeline_components(
         dict: A dictionary of registered pipeline components.
     """
 
-    src_dir = "./src/components"
+    src_dir = "./gretel-mlops/src/gretel_mlops/azure/azureai/src/components"
 
     ml_client = create_ml_client(
         subscription_id, resource_group, workspace_name
     )
-
 
     # Define and register the preprocess component of the pipeline
     preprocess_component = command(
