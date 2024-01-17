@@ -98,7 +98,8 @@ def define_pipeline_components(
         dict: A dictionary of registered pipeline components.
     """
 
-    src_dir = "./gretel-mlops/src/gretel_mlops/azure/azureai/src/components"
+    # src_dir = "./gretel-mlops/src/gretel_mlops/azure/azureai/src/components"
+    src_dir = "/anaconda/envs/azureml_py310_sdkv2/lib/python3.10/site-packages/gretel_mlops/azure/azureai/src"
 
     ml_client = create_ml_client(
         subscription_id, resource_group, workspace_name
