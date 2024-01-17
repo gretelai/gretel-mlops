@@ -4,6 +4,7 @@ from azure.ai.ml import Input, MLClient, Output, command
 from azure.ai.ml.constants import AssetTypes
 from azure.ai.ml.entities import Data
 from azure.identity import DefaultAzureCredential
+from azure.keyvault.secrets import SecretClient
 
 
 def create_ml_client(subscription_id, resource_group, workspace_name):
@@ -73,6 +74,35 @@ def create_asset_from_config(
     config_asset = ml_client.data.get(name=asset_name, version=asset_version)
 
     return config_asset
+
+
+def get_secret(secret_name, key_vault_name):
+    """
+    Retrieves a secret value from Azure Key Vault.
+
+    Args:
+        secret_name (str): The name of the secret.
+        key_vault_name (str): The name of the Azure Key Vault.
+
+    Returns:
+        str: The retrieved secret value.
+    """
+    # URL to the Azure Key Vault
+    key_vault_url = f"https://{key_vault_name}.vault.azure.net/"
+
+    # Create a credential object using DefaultAzureCredential
+    credential = DefaultAzureCredential()
+
+    # Create a SecretClient object for the Key Vault
+    client = SecretClient(vault_url=key_vault_url, credential=credential)
+
+    try:
+        # Retrieve the secret value
+        retrieved_secret = client.get_secret(secret_name)
+        return retrieved_secret.value
+    except Exception as e:
+        print(f"An error occurred accessing the secret: {e}")
+        return None
 
 
 def define_pipeline_components(

@@ -8,50 +8,21 @@ import xgboost as xgb
 from gretel_client.projects.models import Model
 from gretel_client.tuner import BaseTunerMetric, MetricDirection
 from imblearn.over_sampling import RandomOverSampler
-from sklearn.metrics import (average_precision_score, confusion_matrix,
-                             mean_absolute_error, mean_squared_error,
-                             precision_recall_curve, r2_score, roc_auc_score)
-
-from azure.identity import DefaultAzureCredential
-from azure.keyvault.secrets import SecretClient
+from sklearn.metrics import (
+    average_precision_score,
+    confusion_matrix,
+    mean_absolute_error,
+    mean_squared_error,
+    precision_recall_curve,
+    r2_score,
+    roc_auc_score,
+)
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 logger.addHandler(logging.StreamHandler())
 
 warnings.filterwarnings("ignore")
-
-
-def get_secret(secret_name, key_vault_name):
-    """
-    Retrieves a secret value from Azure Key Vault.
-
-    Args:
-        secret_name (str): The name of the secret.
-        key_vault_name (str): The name of the Azure Key Vault.
-
-    Returns:
-        str: The retrieved secret value.
-    """
-    # URL to the Azure Key Vault
-    key_vault_url = f"https://{key_vault_name}.vault.azure.net/"
-
-    # Create a credential object using DefaultAzureCredential
-    credential = DefaultAzureCredential()
-
-    token = credential.get_token('https://management.azure.com/.default')
-    logger.info(f"Credential token: {token.token[:10]}")
-
-    # Create a SecretClient object for the Key Vault
-    client = SecretClient(vault_url=key_vault_url, credential=credential)
-
-    try:
-        # Retrieve the secret value
-        retrieved_secret = client.get_secret(secret_name)
-        return retrieved_secret.value
-    except Exception as e:
-        print(f"An error occurred accessing the secret: {e}")
-        return None
 
 
 def naive_upsample(df, target_column, target_balance=1.0):
