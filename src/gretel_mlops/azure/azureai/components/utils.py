@@ -4,20 +4,15 @@ import numpy as np
 import optuna
 import pandas as pd
 import xgboost as xgb
-from azure.identity import DefaultAzureCredential
-from azure.keyvault.secrets import SecretClient
 from gretel_client.projects.models import Model
 from gretel_client.tuner import BaseTunerMetric, MetricDirection
 from imblearn.over_sampling import RandomOverSampler
-from sklearn.metrics import (
-    average_precision_score,
-    confusion_matrix,
-    mean_absolute_error,
-    mean_squared_error,
-    precision_recall_curve,
-    r2_score,
-    roc_auc_score,
-)
+from sklearn.metrics import (average_precision_score, confusion_matrix,
+                             mean_absolute_error, mean_squared_error,
+                             precision_recall_curve, r2_score, roc_auc_score)
+
+from azure.identity import DefaultAzureCredential
+from azure.keyvault.secrets import SecretClient
 
 warnings.filterwarnings("ignore")
 

@@ -81,7 +81,7 @@ def define_pipeline_components(
     workspace_name,
     pipeline_job_env_name,
     pipeline_job_env_version,
-    src_dir
+    src_dir,
 ):
     """
     Define and register the components of the machine learning pipeline.
@@ -94,7 +94,7 @@ def define_pipeline_components(
             pipeline components.
         pipeline_job_env_version (str): The version of the environment for the
             pipeline components.
-        src_dir (str): The source directory where the code for the pipeline 
+        src_dir (str): The source directory where the code for the pipeline
             component is located.
 
     Returns:
