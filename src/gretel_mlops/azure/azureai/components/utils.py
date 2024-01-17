@@ -1,4 +1,5 @@
 import warnings
+import logging
 
 import numpy as np
 import optuna
@@ -13,6 +14,10 @@ from sklearn.metrics import (average_precision_score, confusion_matrix,
 
 from azure.identity import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+logger.addHandler(logging.StreamHandler())
 
 warnings.filterwarnings("ignore")
 
@@ -33,6 +38,9 @@ def get_secret(secret_name, key_vault_name):
 
     # Create a credential object using DefaultAzureCredential
     credential = DefaultAzureCredential()
+
+    token = credential.get_token('https://management.azure.com/.default')
+    logger.info(f"Credential token: {token.token[:10]}")
 
     # Create a SecretClient object for the Key Vault
     client = SecretClient(vault_url=key_vault_url, credential=credential)
