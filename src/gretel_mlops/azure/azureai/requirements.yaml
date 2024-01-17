@@ -13,3 +13,4 @@ dependencies:
     - s3fs
     - azureml
     - azureml-core
+    - azure-identity
