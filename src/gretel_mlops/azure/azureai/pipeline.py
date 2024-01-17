@@ -81,6 +81,7 @@ def define_pipeline_components(
     workspace_name,
     pipeline_job_env_name,
     pipeline_job_env_version,
+    src_dir
 ):
     """
     Define and register the components of the machine learning pipeline.
@@ -98,7 +99,7 @@ def define_pipeline_components(
         dict: A dictionary of registered pipeline components.
     """
 
-    src_dir = "./src/components"
+    # src_dir = "./src/components"
 
     ml_client = create_ml_client(
         subscription_id, resource_group, workspace_name
