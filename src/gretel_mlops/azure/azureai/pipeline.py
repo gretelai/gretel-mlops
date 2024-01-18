@@ -32,21 +32,31 @@ def create_asset_from_config(
     ml_client, workspace, config_dict, asset_name, asset_version="v0", datastore_name="greteldatastore"
 ):
     """
-    Create or update a data asset from a configuration dictionary.
+    Create or update a data asset based on a provided configuration dictionary in an Azure ML workspace. 
+    The function checks if the specified datastore exists, and if not, prompts for credentials 
+    to create a new Azure Blob Storage datastore. It then attempts to retrieve an existing data asset 
+    with the given name and version; if not found, it creates a new data asset.
 
     Args:
-        ml_client: The Azure ML client object.
-        config_dict: A dictionary containing configuration information.
-        asset_name: The name of the data asset.
+        ml_client: The Azure Machine Learning client object used for asset operations.
+        workspace: The Azure ML Workspace object where the asset will be created or updated.
+        config_dict: A dictionary containing configuration information for the data asset.
+        asset_name: The name of the data asset to be created or updated.
         asset_version: The version of the data asset (default is 'v0').
+        datastore_name: The name of the datastore to be used (default is 'greteldatastore').
 
     Returns:
-        The created or updated data asset.
+        The created or updated data asset object.
+
+    Raises:
+        Exception: If there is an error in creating or updating the data asset.
     """
+    # Create a YAML file from the configuration dictionary
     config_file = f"{asset_name}.yaml"
     with open(config_file, "w") as file:
         yaml.dump(config_dict, file, default_flow_style=False, sort_keys=False)
 
+    # Define the data asset configuration
     config_data = Data(
         name=asset_name,
         path=config_file,
@@ -54,11 +64,8 @@ def create_asset_from_config(
         type=AssetTypes.URI_FILE,
     )
 
-    # Check if the datastore exists
-    if datastore_name in workspace.datastores:
-        print(f"Datastore '{datastore_name}' already exists.")
-    else:
-        # If datastore does not exist, create a new Azure Blob Storage datastore
+    # Check if the specified datastore exists, create it if not
+    if datastore_name not in workspace.datastores:
         account_name = getpass.getpass(prompt='Enter your Azure Storage Account Name: ')
         account_key = getpass.getpass(prompt='Enter your Azure Storage Account Key: ')
         container_name = f"{account_name}-container"
@@ -90,8 +97,8 @@ def create_asset_from_config(
     # Print the outcome message
     print(message)
 
+    # Retrieve and return the data asset
     config_asset = ml_client.data.get(name=asset_name, version=asset_version)
-
     return config_asset
 
 
