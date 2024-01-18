@@ -29,21 +29,31 @@ def create_ml_client(subscription_id, resource_group, workspace_name):
 
 
 def create_asset_from_config(
-    ml_client, workspace, config_dict, asset_name, asset_version="v0", datastore_name="greteldatastore"
+    ml_client,
+    workspace,
+    config_dict,
+    asset_name,
+    asset_version="v0",
+    datastore_name="greteldatastore",
 ):
     """
-    Create or update a data asset based on a provided configuration dictionary in an Azure ML workspace. 
-    The function checks if the specified datastore exists, and if not, prompts for credentials 
-    to create a new Azure Blob Storage datastore. It then attempts to retrieve an existing data asset 
+    Create or update a data asset based on a provided configuration dictionary
+    in an Azure ML workspace. The function checks if the specified datastore
+    exists, and if not, prompts for credentials to create a new Azure Blob
+    Storage datastore. It then attempts to retrieve an existing data asset
     with the given name and version; if not found, it creates a new data asset.
 
     Args:
-        ml_client: The Azure Machine Learning client object used for asset operations.
-        workspace: The Azure ML Workspace object where the asset will be created or updated.
-        config_dict: A dictionary containing configuration information for the data asset.
+        ml_client: The Azure Machine Learning client object used for asset
+            operations.
+        workspace: The Azure ML Workspace object where the asset will be
+            created or updated.
+        config_dict: A dictionary containing configuration information for the
+            data asset.
         asset_name: The name of the data asset to be created or updated.
         asset_version: The version of the data asset (default is 'v0').
-        datastore_name: The name of the datastore to be used (default is 'greteldatastore').
+        datastore_name: The name of the datastore to be used (default is
+            'greteldatastore').
 
     Returns:
         The created or updated data asset object.
@@ -66,15 +76,19 @@ def create_asset_from_config(
 
     # Check if the specified datastore exists, create it if not
     if datastore_name not in workspace.datastores:
-        account_name = getpass.getpass(prompt='Enter your Azure Storage Account Name: ')
-        account_key = getpass.getpass(prompt='Enter your Azure Storage Account Key: ')
+        account_name = getpass.getpass(
+            prompt="Enter your Azure Storage Account Name: "
+        )
+        account_key = getpass.getpass(
+            prompt="Enter your Azure Storage Account Key: "
+        )
         container_name = f"{account_name}-container"
         Datastore.register_azure_blob_container(
             workspace=workspace,
             datastore_name=datastore_name,
             container_name=container_name,
             account_name=account_name,
-            account_key=account_key
+            account_key=account_key,
         )
 
     try:

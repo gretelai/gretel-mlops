@@ -1,15 +1,15 @@
 dataset:
-  name: healthcare-stroke-data
-  train_path: s3://gretel-datasets/ml_ops/stroke/train.csv
+  name: churn
+  train_path: s3://gretel-datasets/ml_ops/churn/train.csv
   validation_path: null
   test_path: null
-  target_column: stroke
-  drop_columns: id
+  target_column: Exited
+  drop_columns: CustomerId
 ML:
   ml_task: classification
   objective: binary:logistic
   objective_type: Maximize
-  ml_eval_metric: f1
+  ml_eval_metric: aucpr
   ml_metric_threshold: 0.0
 gretel:
   strategy: balance
