@@ -162,8 +162,7 @@ def define_pipeline_components(
         display_name="gretel_component",
         inputs={
             "config": Input(type="uri_file"),
-            "gretel_secret": Input(type="string"),
-            "gretel_key_vault": Input(type="string"),
+            "gretel_api_key": Input(type="string"),
             "input_dir": Input(type="uri_folder"),
         },
         outputs=dict(
@@ -172,8 +171,7 @@ def define_pipeline_components(
         code=src_dir,
         command=(
             "python gretel.py --config ${{inputs.config}} "
-            "--gretel-secret ${{inputs.gretel_secret}} "
-            "--gretel-key-vault ${{inputs.gretel_key_vault}} "
+            "--gretel-api-key ${{inputs.gretel_api_key}} "
             "--input-dir ${{inputs.input_dir}} "
             "--output-dir ${{outputs.output_dir}}"
         ),
