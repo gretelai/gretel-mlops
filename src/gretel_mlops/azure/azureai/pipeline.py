@@ -6,6 +6,7 @@ from azure.ai.ml.constants import AssetTypes
 from azure.ai.ml.entities import Data
 from azure.identity import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
+from azureml.core import Datastore
 
 
 def create_ml_client(subscription_id, resource_group, workspace_name):

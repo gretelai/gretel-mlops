@@ -9,7 +9,7 @@ import joblib
 import pandas as pd
 import yaml
 from gretel_client import Gretel
-from utils import MLMetric, get_secret, naive_upsample
+from utils import MLMetric, naive_upsample
 
 warnings.filterwarnings("ignore")
 
