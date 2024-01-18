@@ -1,3 +1,4 @@
+import getpass
 import yaml
 
 from azure.ai.ml import Input, MLClient, Output, command
