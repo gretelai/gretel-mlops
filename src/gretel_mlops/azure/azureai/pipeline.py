@@ -29,7 +29,7 @@ def create_ml_client(subscription_id, resource_group, workspace_name):
 
 
 def create_asset_from_config(
-    ml_client, workspace, config_dict, asset_name, asset_version="v0", datastore_name="gretelDatastore"
+    ml_client, workspace, config_dict, asset_name, asset_version="v0", datastore_name="greteldatastore"
 ):
     """
     Create or update a data asset from a configuration dictionary.
