@@ -27,7 +27,7 @@ def create_ml_client(subscription_id, resource_group, workspace_name):
 
 
 def create_asset_from_config(
-    ml_client, config_dict, asset_name, asset_version="v0"
+    ml_client, config_dict, asset_name, asset_version="v0", datastore_name="gretelDatastore"
 ):
     """
     Create or update a data asset from a configuration dictionary.
@@ -51,6 +51,23 @@ def create_asset_from_config(
         version=asset_version,
         type=AssetTypes.URI_FILE,
     )
+
+    # Check if the datastore exists
+    if datastore_name in ws.datastores:
+        print(f"Datastore '{datastore_name}' already exists.")
+    else:
+        # If datastore does not exist, create a new Azure Blob Storage datastore
+        account_name = getpass.getpass(prompt='Enter your Azure Storage Account Name: ')
+        account_key = getpass.getpass(prompt='Enter your Azure Storage Account Key: ')
+        container_name = f"{account_name}-container"
+        Datastore.register_azure_blob_container(
+            workspace=ws,
+            datastore_name=datastore_name,
+            container_name=container_name,
+            account_name=account_name,
+            account_key=account_key
+        )
+
     try:
         # Attempt to retrieve the existing asset
         config_asset = ml_client.data.get(
