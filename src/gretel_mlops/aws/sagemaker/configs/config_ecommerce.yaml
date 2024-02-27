@@ -1,6 +1,6 @@
 dataset:
-  name: abalone
-  train_path: s3://gretel-datasets/ml_ops/abalone/ecommerce.csv
+  name: ecommerce
+  train_path: s3://gretel-datasets/ml_ops/ecommerce/train.csv
   validation_path: null
   test_path: null
   target_column: Yearly Amount Spent

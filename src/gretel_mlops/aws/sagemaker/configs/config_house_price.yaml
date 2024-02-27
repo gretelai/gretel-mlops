@@ -1,5 +1,5 @@
 dataset:
-  name: healthcare-stroke-data
+  name: house_price
   train_path: s3://gretel-datasets/ml_ops/house_price/train.csv
   validation_path: null
   test_path: null

@@ -1,8 +1,8 @@
 dataset:
-  name: healthcare-stroke-data
+  name: bank_loan
   train_path: s3://gretel-datasets/ml_ops/bank_loan/train.csv
   validation_path: null
-  test_path: s3://gretel-datasets/ml_ops/bank_loan/test.csv
+  test_path: null
   target_column: Loan Status
   drop_columns: ID
 ML:

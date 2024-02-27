@@ -1,9 +1,9 @@
 dataset:
-  name: healthcare-stroke-data
-  train_path: s3://gretel-datasets/ml_ops/heart_failure/train.csv
+  name: company_bankruptcy
+  train_path: s3://gretel-datasets/ml_ops/company_bankruptcy/train.csv
   validation_path: null
   test_path: null
-  target_column: HeartDisease
+  target_column: Bankrupt?
   drop_columns: null
 ML:
   ml_task: classification
