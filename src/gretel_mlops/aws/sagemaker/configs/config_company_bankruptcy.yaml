@@ -1,5 +1,5 @@
 dataset:
-  name: company_bankruptcy
+  name: company-bankruptcy
   train_path: s3://gretel-datasets/ml_ops/company_bankruptcy/train.csv
   validation_path: null
   test_path: null
@@ -9,7 +9,7 @@ ML:
   ml_task: classification
   objective: binary:logistic
   objective_type: Maximize
-  ml_eval_metric: f1
+  ml_eval_metric: aucpr
   ml_metric_threshold: 0.0
 gretel:
   strategy: balance
