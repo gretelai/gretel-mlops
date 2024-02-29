@@ -1,10 +1,13 @@
 dataset:
-  name: house-price
-  train_path: s3://gretel-datasets/ml_ops/house_price/train.csv
+  name: ecommerce
+  train_path: s3://gretel-datasets/ml_ops/ecommerce/train.csv
   validation_path: null
   test_path: null
-  target_column: Price
-  drop_columns: null
+  target_column: Yearly Amount Spent
+  drop_columns: 
+    - Avatar
+    - Email
+    - Address
 ML:
   ml_task: regression
   objective: reg:linear
