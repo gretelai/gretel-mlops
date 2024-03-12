@@ -1,5 +1,5 @@
 dataset:
-  name: bank_loan
+  name: bank-loan
   train_path: s3://gretel-datasets/ml_ops/bank_loan/train.csv
   validation_path: null
   test_path: null
