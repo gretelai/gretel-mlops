@@ -1,0 +1,16 @@
+name: model-env
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip:
+    - gretel-client[azure,tuner]
+    - scikit-learn==1.3.0
+    - imblearn
+    - xgboost
+    - optuna
+    - fsspec
+    - s3fs
+    - azureml
+    - azureml-core
+    - azure-identity
