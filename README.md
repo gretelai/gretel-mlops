@@ -1,6 +1,6 @@
 # MLOps Pipeline with Gretel Synthetic Data
 
-This repository, located at [gretelai/gretel-mlops](https://github.com/gretelai/gretel-mlops), demonstrates how to leverage Gretel Synthetic data within MLOps pipelines across multiple cloud platforms: AWS SageMaker, Google Cloud Vertex AI, and Azure AI. By integrating synthetic data into machine learning operations, we aim to enhance data privacy, availability, and the robustness of ML models in a world increasingly focused on data security and regulatory compliance.
+This repository, located at [gretelai/gretel-mlops](https://github.com/gretelai/gretel-mlops), demonstrates how to leverage Gretel Synthetic data within MLOps pipelines across multiple cloud platforms: Amazon SageMaker, Google Cloud Vertex AI, and Azure AI. By integrating synthetic data into machine learning operations, we aim to enhance data privacy, availability, and the robustness of ML models in a world increasingly focused on data security and regulatory compliance.
 
 ## Features
 
@@ -45,11 +45,11 @@ For implementing the pipeline in Azure AI, refer to the following notebook:
 - [Run Pipeline in Azure AI](https://github.com/gretelai/gretel-mlops/blob/main/run_pipeline_azure.ipynb)
 
 
-### AWS SageMaker
+### Amazon SageMaker
 
-For deploying and running the pipeline in AWS SageMaker, access the notebook here:
+For deploying and running the pipeline in Amazon SageMaker, access the notebook here:
 
-- [Run Pipeline in AWS SageMaker](https://github.com/gretelai/gretel-mlops/blob/main/run_pipeline_sagemaker.ipynb)
+- [Run Pipeline in Amazon SageMaker](https://github.com/gretelai/gretel-mlops/blob/main/run_pipeline_sagemaker.ipynb)
 
 
 ### Google Cloud Vertex AI
